@@ -53,6 +53,51 @@ def weather_api():
     result = get_realtime_weather(city)
     return jsonify(result)
 
+//smart recomendation
+def generate_recommendation(weather):
+    recommendations = []
+
+    condition = str(weather.get("condition", "")).lower()
+    temperature = float(weather.get("temperature", 0))
+    feels_like = float(weather.get("feels_like", 0))
+    humidity = float(weather.get("humidity", 0))
+    wind_speed = float(weather.get("wind_speed", 0))
+    uv = float(weather.get("uv", 0))
+    precip = float(weather.get("precip", 0))
+    pm25 = float(weather.get("air_quality_pm25", 0))
+
+    if "hujan" in condition or "rain" in condition or precip > 0:
+        recommendations.append("Bawa payung atau jas hujan karena ada indikasi hujan di lokasi ini.")
+
+    if uv >= 8:
+        recommendations.append("UV Index sangat tinggi. Gunakan sunscreen, topi, atau hindari terlalu lama di luar ruangan.")
+    elif uv >= 6:
+        recommendations.append("UV Index cukup tinggi. Gunakan pelindung kulit jika beraktivitas di luar.")
+    elif uv >= 3:
+        recommendations.append("UV Index sedang. Aktivitas luar masih aman, tetapi tetap disarankan memakai pelindung jika lama di bawah matahari.")
+
+    if feels_like >= 33:
+        recommendations.append("Suhu terasa cukup panas. Perbanyak minum air dan hindari aktivitas berat terlalu lama.")
+    elif temperature <= 22:
+        recommendations.append("Udara cukup sejuk. Gunakan pakaian yang nyaman agar tubuh tetap hangat.")
+
+    if humidity >= 80:
+        recommendations.append("Kelembapan tinggi, udara bisa terasa lebih gerah dan kurang nyaman.")
+    elif humidity <= 35:
+        recommendations.append("Udara cukup kering. Jaga hidrasi tubuh dan kelembapan kulit.")
+
+    if wind_speed >= 30:
+        recommendations.append("Angin cukup kencang. Hati-hati saat berkendara atau berada di luar ruangan.")
+
+    if pm25 >= 55:
+        recommendations.append("Kualitas udara kurang baik. Gunakan masker jika beraktivitas di luar.")
+    elif pm25 >= 35:
+        recommendations.append("Kualitas udara sedang. Orang sensitif sebaiknya membatasi aktivitas luar ruangan.")
+
+    if not recommendations:
+        recommendations.append("Kondisi cuaca cukup aman untuk aktivitas harian.")
+
+    return recommendations
 
 def get_realtime_weather(city):
     params = {
@@ -108,6 +153,8 @@ def get_realtime_weather(city):
                 "status": "Data realtime berhasil diperbarui"
             }
 
+            //hasil rekomendasi
+            weather["recommendations"] = generate_recommendation(weather)
             last_good_data[city.lower()] = weather
 
             return {
