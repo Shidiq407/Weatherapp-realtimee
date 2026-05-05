@@ -6,55 +6,80 @@
     <title>Cuaca Global Real-Time</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            background: #f4f4f4;
+            background: linear-gradient(135deg, #74ebd5, #9face6);
             text-align: center;
             padding: 20px;
             margin: 0;
+            min-height: 100vh;
+            color: #222;
         }
 
         .container {
-            max-width: 650px;
+            max-width: 850px;
             margin: 0 auto;
-            background: white;
+            background: rgba(255, 255, 255, 0.92);
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            border-radius: 24px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+            backdrop-filter: blur(12px);
         }
 
         h1 {
-            color: #333;
+            color: #1f2937;
             margin-bottom: 5px;
+            font-size: 32px;
         }
 
         .subtitle {
             color: #666;
             font-size: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
+        }
+
+        .form-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
         input[type="text"] {
-            padding: 12px;
-            width: 75%;
+            padding: 13px 15px;
+            width: 60%;
+            min-width: 230px;
             border: 1px solid #ccc;
-            border-radius: 6px;
+            border-radius: 12px;
             font-size: 15px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
         }
 
         button {
-            padding: 12px 18px;
-            margin: 5px;
+            padding: 13px 18px;
             background: #4CAF50;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 15px;
+            font-weight: bold;
+            transition: 0.2s;
         }
 
         button:hover {
-            background: #45a049;
+            transform: translateY(-2px);
+            background: #3f9743;
         }
 
         .stop-btn {
@@ -68,54 +93,28 @@
         #loading {
             display: none;
             margin-top: 15px;
-            color: #4CAF50;
+            color: #2e9d50;
             font-weight: bold;
         }
 
         #error {
-            color: red;
+            color: #d00000;
             margin-top: 15px;
-        }
-
-        .weather-card {
-            display: none;
-            margin-top: 25px;
-            padding: 20px;
-            border-radius: 10px;
-            background: #fafafa;
-            border: 1px solid #ddd;
-        }
-
-        .weather-card p {
-            font-size: 17px;
-            color: #444;
-            margin: 8px 0;
-        }
-
-        .temp-big {
-            font-size: 42px;
             font-weight: bold;
-            color: #222;
-            margin: 8px 0;
-        }
-
-        .status {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #777;
         }
 
         .live-indicator {
             display: none;
-            margin: 15px auto;
+            margin: 18px auto;
             width: fit-content;
-            color: #1d8f3a;
+            color: #0f7a2c;
             background: #eaffea;
-            border: 1px solid #b7e8b7;
-            padding: 8px 14px;
-            border-radius: 20px;
+            border: 1px solid #9be49b;
+            padding: 9px 16px;
+            border-radius: 25px;
             font-weight: bold;
             animation: blink 1s infinite;
+            box-shadow: 0 0 15px rgba(29, 143, 58, 0.35);
         }
 
         @keyframes blink {
@@ -124,17 +123,144 @@
             }
         }
 
-        @media (max-width: 600px) {
-            input[type="text"] {
-                width: 90%;
+        .weather-card {
+            display: none;
+            margin-top: 25px;
+            padding: 24px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, #ffffff, #f0f7ff);
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .main-weather {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 22px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .main-weather img {
+            width: 110px;
+            height: 110px;
+        }
+
+        .city-title {
+            margin: 0;
+            color: #111827;
+        }
+
+        .condition-text {
+            margin-top: 7px;
+            font-size: 18px;
+            color: #555;
+            text-transform: capitalize;
+        }
+
+        .temp-big {
+            font-size: 64px;
+            font-weight: 900;
+            color: #1f2937;
+            margin: 5px 0;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+            text-align: left;
+            border: 1px solid #f0f0f0;
+            transition: 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .trend-up {
+            color: #e63946;
+        }
+
+        .trend-down {
+            color: #0077b6;
+        }
+
+        .trend-same {
+            color: #777;
+        }
+
+        .status {
+            margin-top: 18px;
+            font-size: 14px;
+            color: #666;
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 14px;
+        }
+
+        .pulse {
+            animation: pulseEffect 0.45s ease;
+        }
+
+        @keyframes pulseEffect {
+            0% {
+                transform: scale(1);
             }
 
+            50% {
+                transform: scale(1.04);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 700px) {
             .container {
-                padding: 20px;
+                padding: 22px;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+
+            input[type="text"] {
+                width: 100%;
             }
 
             button {
-                width: 90%;
+                width: 100%;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .temp-big {
+                font-size: 52px;
             }
         }
     </style>
@@ -143,16 +269,17 @@
 
     <div class="container">
         <h1>Cuaca Global Real-Time</h1>
-        <p class="subtitle">Menggunakan WeatherAPI.com Realtime API</p>
+        <p class="subtitle">Data live dari WeatherAPI.com Realtime API</p>
 
         <form id="weatherForm">
-            <input type="text" id="cityInput" placeholder="Contoh: Jakarta, Surabaya, Bandung" required>
-            <br>
-            <button type="submit">Cek & Mulai Realtime</button>
-            <button type="button" id="stopBtn" class="stop-btn">Stop Realtime</button>
+            <div class="form-box">
+                <input type="text" id="cityInput" placeholder="Contoh: Jakarta, Surabaya, Bandung" required>
+                <button type="submit">Cek & Mulai Realtime</button>
+                <button type="button" id="stopBtn" class="stop-btn">Stop Realtime</button>
+            </div>
         </form>
 
-        <div id="loading">Mengambil data realtime...</div>
+        <div id="loading">Mengambil data cuaca terbaru...</div>
         <div id="error"></div>
 
         <div id="liveIndicator" class="live-indicator">
@@ -160,21 +287,67 @@
         </div>
 
         <div id="weatherInfo" class="weather-card">
-            <h2 id="cityName"></h2>
-            <img id="weatherIcon" src="" alt="Ikon Cuaca">
+            <div class="main-weather">
+                <div>
+                    <h2 id="cityName" class="city-title"></h2>
+                    <div id="condition" class="condition-text"></div>
+                    <div id="temperature" class="temp-big">--°C</div>
+                </div>
 
-            <div id="temperature" class="temp-big"></div>
+                <img id="weatherIcon" src="" alt="Ikon Cuaca">
+            </div>
 
-            <p id="condition"></p>
-            <p id="feelsLike"></p>
-            <p id="humidity"></p>
-            <p id="pressure"></p>
-            <p id="wind"></p>
-            <p id="uv"></p>
-            <p id="visibility"></p>
-            <p id="localtime"></p>
-            <p id="lastUpdated"></p>
-            <p id="requestTime"></p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Terasa Seperti</div>
+                    <div class="metric-value" id="feelsLike">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Kelembapan</div>
+                    <div class="metric-value" id="humidity">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Tekanan Udara</div>
+                    <div class="metric-value" id="pressure">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Kecepatan Angin</div>
+                    <div class="metric-value" id="wind">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">UV Index</div>
+                    <div class="metric-value" id="uv">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Jarak Pandang</div>
+                    <div class="metric-value" id="visibility">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Waktu Lokal Kota</div>
+                    <div class="metric-value" id="localtime">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Data API Terakhir Diperbarui</div>
+                    <div class="metric-value" id="lastUpdated">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Request Aplikasi</div>
+                    <div class="metric-value" id="requestTime">-</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">Status Data</div>
+                    <div class="metric-value" id="dataStatus">-</div>
+                </div>
+            </div>
 
             <div id="status" class="status"></div>
         </div>
@@ -192,6 +365,7 @@
         let currentCity = "";
         let liveInterval = null;
         let controller = null;
+        let previousWeather = null;
 
         form.addEventListener("submit", function(event) {
             event.preventDefault();
@@ -203,11 +377,9 @@
             }
 
             currentCity = city;
+            previousWeather = null;
 
-            // Ambil data pertama langsung
             getWeather(currentCity);
-
-            // Mulai realtime otomatis
             startRealtime();
         });
 
@@ -220,10 +392,11 @@
                 clearInterval(liveInterval);
             }
 
-            // Update otomatis setiap 5 detik
+            // Update otomatis setiap 10 detik.
+            // Kalau mau lebih hemat limit API, ubah 10000 jadi 30000.
             liveInterval = setInterval(function() {
                 getWeather(currentCity);
-            }, 5000);
+            }, 10000);
 
             liveIndicator.style.display = "block";
         }
@@ -264,7 +437,6 @@
             loading.style.display = "block";
             errorDiv.textContent = "";
 
-            // Membatalkan request lama agar tidak menumpuk
             if (controller) {
                 controller.abort();
             }
@@ -296,7 +468,71 @@
             });
         }
 
+        function animateNumber(elementId, oldValue, newValue, suffix = "", decimals = 1) {
+            const element = document.getElementById(elementId);
+
+            oldValue = Number(oldValue);
+            newValue = Number(newValue);
+
+            if (isNaN(oldValue)) oldValue = newValue;
+            if (isNaN(newValue)) newValue = 0;
+
+            const duration = 700;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const progress = Math.min((currentTime - startTime) / duration, 1);
+                const value = oldValue + (newValue - oldValue) * progress;
+
+                element.textContent = value.toFixed(decimals) + suffix;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.textContent = newValue.toFixed(decimals) + suffix;
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        function getTrend(oldValue, newValue) {
+            if (oldValue === null || oldValue === undefined) {
+                return "";
+            }
+
+            oldValue = Number(oldValue);
+            newValue = Number(newValue);
+
+            if (isNaN(oldValue) || isNaN(newValue)) {
+                return "";
+            }
+
+            if (newValue > oldValue) {
+                return ' <span class="trend-up">↑</span>';
+            } else if (newValue < oldValue) {
+                return ' <span class="trend-down">↓</span>';
+            } else {
+                return ' <span class="trend-same">→</span>';
+            }
+        }
+
+        function setMetric(id, value, unit = "", oldValue = null) {
+            const element = document.getElementById(id);
+            const trend = getTrend(oldValue, value);
+
+            element.innerHTML = value + unit + trend;
+
+            if (oldValue !== null && Number(oldValue) !== Number(value)) {
+                element.classList.remove("pulse");
+                void element.offsetWidth;
+                element.classList.add("pulse");
+            }
+        }
+
         function showWeather(weather) {
+            const old = previousWeather;
+
             document.getElementById("cityName").textContent =
                 weather.city + ", " + weather.country;
 
@@ -304,42 +540,81 @@
                 "https:" + weather.icon;
 
             document.getElementById("condition").textContent =
-                "Kondisi: " + weather.condition;
+                weather.condition;
 
-            document.getElementById("temperature").textContent =
-                weather.temperature + "°C";
+            animateNumber(
+                "temperature",
+                old ? old.temperature : weather.temperature,
+                weather.temperature,
+                "°C",
+                1
+            );
 
-            document.getElementById("feelsLike").textContent =
-                "Terasa seperti: " + weather.feels_like + "°C";
+            setMetric(
+                "feelsLike",
+                weather.feels_like,
+                "°C",
+                old ? old.feels_like : null
+            );
 
-            document.getElementById("humidity").textContent =
-                "Kelembapan: " + weather.humidity + "%";
+            setMetric(
+                "humidity",
+                weather.humidity,
+                "%",
+                old ? old.humidity : null
+            );
 
-            document.getElementById("pressure").textContent =
-                "Tekanan: " + weather.pressure + " mb";
+            setMetric(
+                "pressure",
+                weather.pressure,
+                " mb",
+                old ? old.pressure : null
+            );
 
-            document.getElementById("wind").textContent =
-                "Angin: " + weather.wind_speed + " km/jam, arah " + weather.wind_direction;
+            document.getElementById("wind").innerHTML =
+                weather.wind_speed + " km/jam " +
+                getTrend(old ? old.wind_speed : null, weather.wind_speed) +
+                "<br><small>Arah: " + weather.wind_direction + "</small>";
 
-            document.getElementById("uv").textContent =
-                "UV Index: " + weather.uv;
+            setMetric(
+                "uv",
+                weather.uv,
+                "",
+                old ? old.uv : null
+            );
 
-            document.getElementById("visibility").textContent =
-                "Jarak Pandang: " + weather.visibility + " km";
+            setMetric(
+                "visibility",
+                weather.visibility,
+                " km",
+                old ? old.visibility : null
+            );
 
             document.getElementById("localtime").textContent =
-                "Waktu Lokal Kota: " + weather.localtime;
+                weather.localtime;
 
             document.getElementById("lastUpdated").textContent =
-                "Data terakhir diperbarui API: " + weather.last_updated;
+                weather.last_updated;
 
             document.getElementById("requestTime").textContent =
-                "Request aplikasi: " + weather.request_time;
+                weather.request_time;
 
-            document.getElementById("status").textContent =
-                weather.status + " | Sumber: " + weather.source + " | Auto update setiap 5 detik";
+            if (old && weather.last_updated === old.last_updated) {
+                document.getElementById("dataStatus").textContent =
+                    "Belum ada data baru dari API";
+
+                document.getElementById("status").textContent =
+                    "Live aktif. Aplikasi sudah request ulang, tetapi data cuaca dari API masih sama.";
+            } else {
+                document.getElementById("dataStatus").textContent =
+                    "Data baru diterima";
+
+                document.getElementById("status").textContent =
+                    weather.status + " | Sumber: " + weather.source + " | Auto update setiap 10 detik";
+            }
 
             weatherInfo.style.display = "block";
+            previousWeather = weather;
         }
     </script>
 
