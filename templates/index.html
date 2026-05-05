@@ -339,6 +339,20 @@
             line-height: 1.5;
         }
 
+        .recommendation-title {
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .recommendation-item {
+            margin-top: 9px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
         .trend-up {
             color: #fecaca;
             font-weight: bold;
@@ -578,10 +592,12 @@
                         </div>
                     </div>
 
-<div class="status-card">
-    <strong>Smart Recommendation</strong>
-    <div id="recommendationList" style="margin-top: 10px;"></div>
-</div>
+                    <div class="status-card">
+                        <div class="recommendation-title">Smart Recommendation</div>
+                        <div id="recommendationList" style="margin-top: 10px;">
+                            Masukkan kota untuk mendapatkan rekomendasi cuaca.
+                        </div>
+                    </div>
 
                     <div id="status" class="status-card">
                         Masukkan nama kota untuk mulai memantau cuaca secara live.
@@ -632,6 +648,16 @@
 
         refreshBtn.addEventListener("click", function() {
             const city = cityInput.value.trim();
+
+            if (!city && !currentCity) {
+                alert("Masukkan kota terlebih dahulu.");
+                return;
+            }
+
+            if (city === "Lokasi Saya" && currentCity) {
+                getWeather(currentCity);
+                return;
+            }
 
             if (!validateCity(city)) {
                 return;
@@ -717,6 +743,10 @@
             if (!city) {
                 alert("Nama kota tidak boleh kosong!");
                 return false;
+            }
+
+            if (city === "Lokasi Saya") {
+                return true;
             }
 
             if (!/^[a-zA-Z\s,.\-]+$/.test(city) && !city.includes(",")) {
@@ -855,6 +885,16 @@
             }
         }
 
+        function formatTimezone(timezone) {
+            if (!timezone) {
+                return "-";
+            }
+
+            return timezone
+                .replaceAll("_", " ")
+                .replace("/", " / ");
+        }
+
         function updateBackground(weather) {
             const condition = String(weather.condition || "").toLowerCase();
 
@@ -876,6 +916,21 @@
             }
         }
 
+        function showRecommendations(weather) {
+            const recommendationList = document.getElementById("recommendationList");
+
+            if (weather.recommendations && weather.recommendations.length > 0) {
+                recommendationList.innerHTML = weather.recommendations
+                    .map(function(item) {
+                        return '<div class="recommendation-item">• ' + item + '</div>';
+                    })
+                    .join("");
+            } else {
+                recommendationList.innerHTML =
+                    '<div class="recommendation-item">• Kondisi cuaca cukup aman untuk aktivitas harian.</div>';
+            }
+        }
+
         function showWeather(weather) {
             const old = previousWeather;
 
@@ -888,7 +943,7 @@
                 weather.region + ", " + weather.country;
 
             document.getElementById("timezone").textContent =
-                weather.timezone || "-";
+                formatTimezone(weather.timezone);
 
             document.getElementById("weatherIcon").src =
                 "https:" + weather.icon;
@@ -938,6 +993,8 @@
             document.getElementById("requestTime").textContent =
                 weather.request_time;
 
+            showRecommendations(weather);
+
             if (old && weather.last_updated === old.last_updated) {
                 document.getElementById("dataStatus").textContent =
                     "API belum mengirim nilai baru";
@@ -952,17 +1009,6 @@
                     weather.status + " • Sumber: " + weather.source + " • Auto update setiap 15 detik.";
             }
 
-const recommendationList = document.getElementById("recommendationList");
-
-if (weather.recommendations && weather.recommendations.length > 0) {
-    recommendationList.innerHTML = weather.recommendations
-        .map(function(item) {
-            return "<div style='margin-bottom: 8px;'>• " + item + "</div>";
-        })
-        .join("");
-} else {
-    recommendationList.innerHTML = "• Kondisi cuaca cukup aman untuk aktivitas harian.";
-}  
             weatherLayout.style.display = "grid";
             previousWeather = weather;
         }
