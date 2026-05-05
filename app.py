@@ -53,7 +53,7 @@ def weather_api():
     result = get_realtime_weather(city)
     return jsonify(result)
 
-//smart recomendation
+#smart recomendation
 def generate_recommendation(weather):
     recommendations = []
 
@@ -153,7 +153,7 @@ def get_realtime_weather(city):
                 "status": "Data realtime berhasil diperbarui"
             }
 
-            //hasil rekomendasi
+            #hasil rekomendasi
             weather["recommendations"] = generate_recommendation(weather)
             last_good_data[city.lower()] = weather
 
