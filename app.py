@@ -85,7 +85,11 @@ def get_realtime_weather(city):
 
                 "uv": data["current"]["uv"],
                 "visibility": data["current"]["vis_km"],
-
+                "cloud": data["current"].get("cloud", 0),
+                "gust": data["current"].get("gust_kph", 0),
+                "precip": data["current"].get("precip_mm", 0),
+                "air_quality_pm25": round(data["current"].get("air_quality", {}).get("pm2_5", 0), 1),
+                "air_quality_pm10": round(data["current"].get("air_quality", {}).get("pm10", 0), 1),
                 "last_updated": data["current"]["last_updated"],
                 "request_time": datetime.now().strftime("%H:%M:%S"),
 
