@@ -957,25 +957,31 @@
             localStorage.setItem("weatherFavorites", JSON.stringify(favorites));
         }
 
-        function saveFavoriteCity(city) {
-            let favorites = getFavorites();
-            const cleanCity = city.trim();
+function saveFavoriteCity(city) {
+    let favorites = getFavorites();
+    const cleanCity = city.trim();
+    const maxFavorites = 10;
 
-            const alreadyExists = favorites.some(function(item) {
-                return item.toLowerCase() === cleanCity.toLowerCase();
-            });
+    const alreadyExists = favorites.some(function(item) {
+        return item.toLowerCase() === cleanCity.toLowerCase();
+    });
 
-            if (alreadyExists) {
-                alert("Kota ini sudah ada di favorit.");
-                return;
-            }
+    if (alreadyExists) {
+        alert("Kota ini sudah ada di favorit.");
+        return;
+    }
 
-            favorites.push(cleanCity);
-            saveFavorites(favorites);
-            renderFavorites();
+    if (favorites.length >= maxFavorites) {
+        alert("Favorit sudah penuh. Maksimal " + maxFavorites + " kota. Hapus salah satu dulu ya.");
+        return;
+    }
 
-            alert(cleanCity + " berhasil disimpan ke favorit.");
-        }
+    favorites.push(cleanCity);
+    saveFavorites(favorites);
+    renderFavorites();
+
+    alert(cleanCity + " berhasil disimpan ke favorit.");
+}
 
         function removeFavoriteCity(city) {
             let favorites = getFavorites();
