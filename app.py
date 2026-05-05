@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -37,6 +37,13 @@ last_good_data = {}
 def index():
     return render_template("index.html")
 
+
+@app.route("/sw.js")
+def service_worker():
+    response = make_response(send_from_directory("static", "sw.js"))
+    response.headers["Content-Type"] = "application/javascript"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 @app.route("/api/weather")
 def weather_api():
