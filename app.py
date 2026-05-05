@@ -31,7 +31,7 @@ adapter = HTTPAdapter(max_retries=retry)
 session.mount("http://", adapter)
 session.mount("https://", adapter)
 
-# Menyimpan data terakhir sebagai cadangan kalau API sedang error
+# Data terakhir disimpan sebagai cadangan kalau API/koneksi bermasalah
 last_good_data = {}
 
 
@@ -67,30 +67,41 @@ def get_realtime_weather(city):
         data = response.json()
 
         if response.status_code == 200:
+            current = data["current"]
+            location = data["location"]
+            condition = current["condition"]
+            air_quality = current.get("air_quality", {})
+
             weather = {
-                "city": data["location"]["name"],
-                "region": data["location"]["region"],
-                "country": data["location"]["country"],
-                "localtime": data["location"]["localtime"],
+                "city": location.get("name", "-"),
+                "region": location.get("region", "-"),
+                "country": location.get("country", "-"),
+                "localtime": location.get("localtime", "-"),
+                "timezone": location.get("tz_id", "-"),
 
-                "temperature": data["current"]["temp_c"],
-                "feels_like": data["current"]["feelslike_c"],
-                "humidity": data["current"]["humidity"],
-                "pressure": data["current"]["pressure_mb"],
-                "wind_speed": data["current"]["wind_kph"],
-                "wind_direction": data["current"]["wind_dir"],
+                "temperature": current.get("temp_c", 0),
+                "feels_like": current.get("feelslike_c", 0),
+                "humidity": current.get("humidity", 0),
+                "pressure": current.get("pressure_mb", 0),
 
-                "condition": data["current"]["condition"]["text"],
-                "icon": data["current"]["condition"]["icon"],
+                "wind_speed": current.get("wind_kph", 0),
+                "wind_direction": current.get("wind_dir", "-"),
+                "wind_degree": current.get("wind_degree", 0),
+                "gust": current.get("gust_kph", 0),
 
-                "uv": data["current"]["uv"],
-                "visibility": data["current"]["vis_km"],
-                "cloud": data["current"].get("cloud", 0),
-                "gust": data["current"].get("gust_kph", 0),
-                "precip": data["current"].get("precip_mm", 0),
-                "air_quality_pm25": round(data["current"].get("air_quality", {}).get("pm2_5", 0), 1),
-                "air_quality_pm10": round(data["current"].get("air_quality", {}).get("pm10", 0), 1),
-                "last_updated": data["current"]["last_updated"],
+                "condition": condition.get("text", "-"),
+                "icon": condition.get("icon", ""),
+                "is_day": current.get("is_day", 1),
+
+                "uv": current.get("uv", 0),
+                "visibility": current.get("vis_km", 0),
+                "cloud": current.get("cloud", 0),
+                "precip": current.get("precip_mm", 0),
+
+                "air_quality_pm25": round(air_quality.get("pm2_5", 0), 1),
+                "air_quality_pm10": round(air_quality.get("pm10", 0), 1),
+
+                "last_updated": current.get("last_updated", "-"),
                 "request_time": datetime.now().strftime("%H:%M:%S"),
 
                 "source": "WeatherAPI.com Realtime API",
@@ -161,7 +172,10 @@ def get_realtime_weather(city):
 
 
 if __name__ == "__main__":
-    print("Server berjalan di semua device jaringan.")
+    port = int(os.environ.get("PORT", 5000))
+
+    print("Server berjalan.")
     print("Buka di laptop: http://127.0.0.1:5000")
-    print("Buka di HP/device lain: http://IP-LAPTOP-KAMU:5000")
-    serve(app, host="0.0.0.0", port=5000)
+    print("Buka di HP/device lain satu jaringan: http://IP-LAPTOP-KAMU:5000")
+
+    serve(app, host="0.0.0.0", port=port)
