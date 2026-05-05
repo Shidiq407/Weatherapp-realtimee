@@ -13,9 +13,8 @@ API_KEY = os.getenv("WEATHER_API_KEY")
 if not API_KEY:
     raise ValueError("WEATHER_API_KEY belum diatur. Masukkan API key lewat environment variable.")
 
-BASE_URL = "https://api.weatherapi.com/v1/current.json"
+BASE_URL = "https://api.weatherapi.com/v1/forecast.json"
 
-# Session agar request ke API lebih stabil
 session = requests.Session()
 
 retry = Retry(
@@ -31,7 +30,6 @@ adapter = HTTPAdapter(max_retries=retry)
 session.mount("http://", adapter)
 session.mount("https://", adapter)
 
-# Data terakhir disimpan sebagai cadangan kalau API/koneksi bermasalah
 last_good_data = {}
 
 
@@ -99,11 +97,14 @@ def generate_recommendation(weather):
 
     return recommendations
 
+
 def get_realtime_weather(city):
     params = {
         "key": API_KEY,
         "q": city,
+        "days": 3,
         "aqi": "yes",
+        "alerts": "no",
         "lang": "id"
     }
 
@@ -116,6 +117,45 @@ def get_realtime_weather(city):
             location = data["location"]
             condition = current["condition"]
             air_quality = current.get("air_quality", {})
+            forecast_data = data.get("forecast", {}).get("forecastday", [])
+
+            forecast_days = []
+            hourly_today = []
+
+            for day_item in forecast_data:
+                day_data = day_item.get("day", {})
+                day_condition = day_data.get("condition", {})
+
+                forecast_days.append({
+                    "date": day_item.get("date", "-"),
+                    "max_temp": day_data.get("maxtemp_c", 0),
+                    "min_temp": day_data.get("mintemp_c", 0),
+                    "avg_temp": day_data.get("avgtemp_c", 0),
+                    "chance_of_rain": day_data.get("daily_chance_of_rain", 0),
+                    "total_precip": day_data.get("totalprecip_mm", 0),
+                    "max_wind": day_data.get("maxwind_kph", 0),
+                    "avg_humidity": day_data.get("avghumidity", 0),
+                    "condition": day_condition.get("text", "-"),
+                    "icon": day_condition.get("icon", ""),
+                    "uv": day_data.get("uv", 0)
+                })
+
+            if forecast_data:
+                today_hours = forecast_data[0].get("hour", [])
+
+                for hour in today_hours:
+                    hour_condition = hour.get("condition", {})
+
+                    hourly_today.append({
+                        "time": hour.get("time", "-"),
+                        "temp": hour.get("temp_c", 0),
+                        "feels_like": hour.get("feelslike_c", 0),
+                        "humidity": hour.get("humidity", 0),
+                        "wind": hour.get("wind_kph", 0),
+                        "chance_of_rain": hour.get("chance_of_rain", 0),
+                        "condition": hour_condition.get("text", "-"),
+                        "icon": hour_condition.get("icon", "")
+                    })
 
             weather = {
                 "city": location.get("name", "-"),
@@ -146,15 +186,18 @@ def get_realtime_weather(city):
                 "air_quality_pm25": round(air_quality.get("pm2_5", 0), 1),
                 "air_quality_pm10": round(air_quality.get("pm10", 0), 1),
 
+                "forecast_days": forecast_days,
+                "hourly_today": hourly_today,
+
                 "last_updated": current.get("last_updated", "-"),
                 "request_time": datetime.now().strftime("%H:%M:%S"),
 
-                "source": "WeatherAPI.com Realtime API",
-                "status": "Data realtime berhasil diperbarui"
+                "source": "WeatherAPI.com Forecast API",
+                "status": "Data realtime dan forecast berhasil diperbarui"
             }
 
-      
             weather["recommendations"] = generate_recommendation(weather)
+
             last_good_data[city.lower()] = weather
 
             return {
