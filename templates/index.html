@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WeatherLive Global Dashboard</title>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -404,7 +404,59 @@
             font-size: 12px;
             margin-top: 18px;
         }
+        .section-title {
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
 
+.forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.forecast-card {
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    text-align: center;
+}
+
+.forecast-card img {
+    width: 54px;
+    height: 54px;
+}
+
+.forecast-date {
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.forecast-temp {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 6px 0;
+}
+
+.forecast-small {
+    font-size: 12px;
+    color: var(--text-soft);
+    line-height: 1.5;
+}
+
+.chart-box {
+    margin-top: 14px;
+    height: 260px;
+}
+
+@media (max-width: 560px) {
+    .forecast-grid {
+        grid-template-columns: 1fr;
+    }
+}
         @media (max-width: 900px) {
             .weather-layout {
                 grid-template-columns: 1fr;
@@ -598,7 +650,17 @@
                             Masukkan kota untuk mendapatkan rekomendasi cuaca.
                         </div>
                     </div>
-
+                 <div class="status-card">
+                        <div class="section-title">Forecast 3 Hari</div>
+                        <div id="forecastGrid" class="forecast-grid"></div>
+                    </div>
+                    
+                    <div class="status-card">
+                        <div class="section-title">Grafik Suhu Per Jam Hari Ini</div>
+                        <div class="chart-box">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                  </div>
                     <div id="status" class="status-card">
                         Masukkan nama kota untuk mulai memantau cuaca secara live.
                     </div>
@@ -627,7 +689,7 @@
         let liveInterval = null;
         let controller = null;
         let previousWeather = null;
-
+        let tempChart = null;
         setGreeting();
 
         form.addEventListener("submit", function(event) {
@@ -720,7 +782,7 @@
 
             liveInterval = setInterval(function() {
                 getWeather(currentCity);
-            }, 15000);
+            }, 600000);
 
             liveIndicator.style.display = "flex";
         }
@@ -931,6 +993,103 @@
             }
         }
 
+        function formatForecastDate(dateString) {
+    const date = new Date(dateString);
+
+    return date.toLocaleDateString("id-ID", {
+        weekday: "short",
+        day: "numeric",
+        month: "short"
+    });
+}
+
+function renderForecast(forecastDays) {
+    const forecastGrid = document.getElementById("forecastGrid");
+
+    if (!forecastDays || forecastDays.length === 0) {
+        forecastGrid.innerHTML = "Forecast belum tersedia.";
+        return;
+    }
+
+    forecastGrid.innerHTML = forecastDays.map(function(day) {
+        return `
+            <div class="forecast-card">
+                <div class="forecast-date">${formatForecastDate(day.date)}</div>
+                <img src="https:${day.icon}" alt="Ikon forecast">
+                <div class="forecast-temp">${day.min_temp}°C - ${day.max_temp}°C</div>
+                <div class="forecast-small">${day.condition}</div>
+                <div class="forecast-small">Peluang hujan: ${day.chance_of_rain}%</div>
+                <div class="forecast-small">Angin max: ${day.max_wind} km/jam</div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderHourlyChart(hourlyToday) {
+    const canvas = document.getElementById("tempChart");
+
+    if (!hourlyToday || hourlyToday.length === 0) {
+        return;
+    }
+
+    const sampled = hourlyToday.filter(function(_, index) {
+        return index % 3 === 0;
+    });
+
+    const labels = sampled.map(function(hour) {
+        return hour.time.split(" ")[1];
+    });
+
+    const temps = sampled.map(function(hour) {
+        return hour.temp;
+    });
+
+    if (tempChart) {
+        tempChart.destroy();
+    }
+
+    tempChart = new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Suhu (°C)",
+                data: temps,
+                tension: 0.35,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: "white"
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: "white"
+                    },
+                    grid: {
+                        color: "rgba(255,255,255,0.15)"
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: "white"
+                    },
+                    grid: {
+                        color: "rgba(255,255,255,0.15)"
+                    }
+                }
+            }
+        }
+    });
+}
         function showWeather(weather) {
             const old = previousWeather;
 
@@ -994,7 +1153,8 @@
                 weather.request_time;
 
             showRecommendations(weather);
-
+            renderForecast(weather.forecast_days || []);
+            renderHourlyChart(weather.hourly_today || []);
             if (old && weather.last_updated === old.last_updated) {
                 document.getElementById("dataStatus").textContent =
                     "API belum mengirim nilai baru";
