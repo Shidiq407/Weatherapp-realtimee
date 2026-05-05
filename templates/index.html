@@ -577,6 +577,11 @@
                             <div id="airQualitySub" class="metric-sub">-</div>
                         </div>
                     </div>
+//tempat rekomendasi
+<div class="status-card">
+    <strong>Smart Recommendation</strong>
+    <div id="recommendationList" style="margin-top: 10px;"></div>
+</div>
 
                     <div id="status" class="status-card">
                         Masukkan nama kota untuk mulai memantau cuaca secara live.
@@ -946,7 +951,18 @@
                 document.getElementById("status").textContent =
                     weather.status + " • Sumber: " + weather.source + " • Auto update setiap 15 detik.";
             }
+//js rekomendasi
+const recommendationList = document.getElementById("recommendationList");
 
+if (weather.recommendations && weather.recommendations.length > 0) {
+    recommendationList.innerHTML = weather.recommendations
+        .map(function(item) {
+            return "<div style='margin-bottom: 8px;'>• " + item + "</div>";
+        })
+        .join("");
+} else {
+    recommendationList.innerHTML = "• Kondisi cuaca cukup aman untuk aktivitas harian.";
+}  
             weatherLayout.style.display = "grid";
             previousWeather = weather;
         }
