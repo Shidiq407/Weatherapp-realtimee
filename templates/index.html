@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuaca Global Real-Time</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            width: 75%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            padding: 12px 18px;
+            margin: 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .stop-btn {
+            background: #d9534f;
+        }
+
+        .stop-btn:hover {
+            background: #c9302c;
+        }
+
+        #loading {
+            display: none;
+            margin-top: 15px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        #error {
+            color: red;
+            margin-top: 15px;
+        }
+
+        .weather-card {
+            display: none;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+        }
+
+        .weather-card p {
+            font-size: 17px;
+            color: #444;
+            margin: 8px 0;
+        }
+
+        .temp-big {
+            font-size: 42px;
+            font-weight: bold;
+            color: #222;
+            margin: 8px 0;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .live-indicator {
+            display: none;
+            margin: 15px auto;
+            width: fit-content;
+            color: #1d8f3a;
+            background: #eaffea;
+            border: 1px solid #b7e8b7;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.45;
+            }
+        }
+
+        @media (max-width: 600px) {
+            input[type="text"] {
+                width: 90%;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            button {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Cuaca Global Real-Time</h1>
+        <p class="subtitle">Menggunakan WeatherAPI.com Realtime API</p>
+
+        <form id="weatherForm">
+            <input type="text" id="cityInput" placeholder="Contoh: Jakarta, Surabaya, Bandung" required>
+            <br>
+            <button type="submit">Cek & Mulai Realtime</button>
+            <button type="button" id="stopBtn" class="stop-btn">Stop Realtime</button>
+        </form>
+
+        <div id="loading">Mengambil data realtime...</div>
+        <div id="error"></div>
+
+        <div id="liveIndicator" class="live-indicator">
+            ● LIVE MODE AKTIF
+        </div>
+
+        <div id="weatherInfo" class="weather-card">
+            <h2 id="cityName"></h2>
+            <img id="weatherIcon" src="" alt="Ikon Cuaca">
+
+            <div id="temperature" class="temp-big"></div>
+
+            <p id="condition"></p>
+            <p id="feelsLike"></p>
+            <p id="humidity"></p>
+            <p id="pressure"></p>
+            <p id="wind"></p>
+            <p id="uv"></p>
+            <p id="visibility"></p>
+            <p id="localtime"></p>
+            <p id="lastUpdated"></p>
+            <p id="requestTime"></p>
+
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById("weatherForm");
+        const cityInput = document.getElementById("cityInput");
+        const loading = document.getElementById("loading");
+        const errorDiv = document.getElementById("error");
+        const weatherInfo = document.getElementById("weatherInfo");
+        const stopBtn = document.getElementById("stopBtn");
+        const liveIndicator = document.getElementById("liveIndicator");
+
+        let currentCity = "";
+        let liveInterval = null;
+        let controller = null;
+
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const city = cityInput.value.trim();
+
+            if (!validateCity(city)) {
+                return;
+            }
+
+            currentCity = city;
+
+            // Ambil data pertama langsung
+            getWeather(currentCity);
+
+            // Mulai realtime otomatis
+            startRealtime();
+        });
+
+        stopBtn.addEventListener("click", function() {
+            stopRealtime();
+        });
+
+        function startRealtime() {
+            if (liveInterval) {
+                clearInterval(liveInterval);
+            }
+
+            // Update otomatis setiap 5 detik
+            liveInterval = setInterval(function() {
+                getWeather(currentCity);
+            }, 5000);
+
+            liveIndicator.style.display = "block";
+        }
+
+        function stopRealtime() {
+            if (liveInterval) {
+                clearInterval(liveInterval);
+                liveInterval = null;
+            }
+
+            if (controller) {
+                controller.abort();
+            }
+
+            liveIndicator.style.display = "none";
+
+            const status = document.getElementById("status");
+            if (status) {
+                status.textContent = "Realtime mode dihentikan.";
+            }
+        }
+
+        function validateCity(city) {
+            if (!city) {
+                alert("Nama kota tidak boleh kosong!");
+                return false;
+            }
+
+            if (!/^[a-zA-Z\s,.-]+$/.test(city)) {
+                alert("Nama kota hanya boleh berisi huruf, spasi, koma, titik, atau tanda minus.");
+                return false;
+            }
+
+            return true;
+        }
+
+        function getWeather(city) {
+            loading.style.display = "block";
+            errorDiv.textContent = "";
+
+            // Membatalkan request lama agar tidak menumpuk
+            if (controller) {
+                controller.abort();
+            }
+
+            controller = new AbortController();
+
+            fetch(`/api/weather?city=${encodeURIComponent(city)}`, {
+                signal: controller.signal
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = "none";
+
+                if (data.success) {
+                    showWeather(data.weather);
+                } else {
+                    weatherInfo.style.display = "none";
+                    errorDiv.textContent = data.error;
+                }
+            })
+            .catch(error => {
+                loading.style.display = "none";
+
+                if (error.name !== "AbortError") {
+                    weatherInfo.style.display = "none";
+                    errorDiv.textContent = "Gagal mengambil data realtime.";
+                    console.log(error);
+                }
+            });
+        }
+
+        function showWeather(weather) {
+            document.getElementById("cityName").textContent =
+                weather.city + ", " + weather.country;
+
+            document.getElementById("weatherIcon").src =
+                "https:" + weather.icon;
+
+            document.getElementById("condition").textContent =
+                "Kondisi: " + weather.condition;
+
+            document.getElementById("temperature").textContent =
+                weather.temperature + "°C";
+
+            document.getElementById("feelsLike").textContent =
+                "Terasa seperti: " + weather.feels_like + "°C";
+
+            document.getElementById("humidity").textContent =
+                "Kelembapan: " + weather.humidity + "%";
+
+            document.getElementById("pressure").textContent =
+                "Tekanan: " + weather.pressure + " mb";
+
+            document.getElementById("wind").textContent =
+                "Angin: " + weather.wind_speed + " km/jam, arah " + weather.wind_direction;
+
+            document.getElementById("uv").textContent =
+                "UV Index: " + weather.uv;
+
+            document.getElementById("visibility").textContent =
+                "Jarak Pandang: " + weather.visibility + " km";
+
+            document.getElementById("localtime").textContent =
+                "Waktu Lokal Kota: " + weather.localtime;
+
+            document.getElementById("lastUpdated").textContent =
+                "Data terakhir diperbarui API: " + weather.last_updated;
+
+            document.getElementById("requestTime").textContent =
+                "Request aplikasi: " + weather.request_time;
+
+            document.getElementById("status").textContent =
+                weather.status + " | Sumber: " + weather.source + " | Auto update setiap 5 detik";
+
+            weatherInfo.style.display = "block";
+        }
+    </script>
+
+</body>
+</html>
