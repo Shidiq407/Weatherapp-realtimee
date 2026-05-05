@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WeatherLive Global Dashboard</title>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -117,7 +119,7 @@
 
         .search-area {
             display: grid;
-            grid-template-columns: 1fr auto auto auto;
+            grid-template-columns: 1fr auto auto auto auto auto;
             gap: 10px;
             margin-bottom: 18px;
         }
@@ -166,6 +168,10 @@
             background: rgba(168, 85, 247, 0.9);
         }
 
+        .save-btn {
+            background: rgba(245, 158, 11, 0.95);
+        }
+
         .stop-btn {
             background: rgba(239, 68, 68, 0.9);
         }
@@ -199,6 +205,62 @@
             color: #fecaca;
             font-weight: bold;
             margin: 12px 0;
+        }
+
+        .favorites-box {
+            margin-top: 14px;
+            margin-bottom: 18px;
+            padding: 16px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: none;
+        }
+
+        .favorites-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .favorites-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .favorite-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .favorite-chip:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .remove-favorite {
+            border: none;
+            background: rgba(239, 68, 68, 0.85);
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .weather-layout {
@@ -339,10 +401,12 @@
             line-height: 1.5;
         }
 
-        .recommendation-title {
+        .recommendation-title,
+        .section-title {
             color: white;
             font-weight: bold;
             font-size: 16px;
+            margin-bottom: 12px;
         }
 
         .recommendation-item {
@@ -351,6 +415,47 @@
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.10);
             border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .forecast-card {
+            padding: 14px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            text-align: center;
+        }
+
+        .forecast-card img {
+            width: 54px;
+            height: 54px;
+        }
+
+        .forecast-date {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .forecast-temp {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 6px 0;
+        }
+
+        .forecast-small {
+            font-size: 12px;
+            color: var(--text-soft);
+            line-height: 1.5;
+        }
+
+        .chart-box {
+            margin-top: 14px;
+            height: 260px;
         }
 
         .trend-up {
@@ -404,59 +509,7 @@
             font-size: 12px;
             margin-top: 18px;
         }
-        .section-title {
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    margin-bottom: 12px;
-}
 
-.forecast-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.forecast-card {
-    padding: 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    text-align: center;
-}
-
-.forecast-card img {
-    width: 54px;
-    height: 54px;
-}
-
-.forecast-date {
-    font-weight: bold;
-    margin-bottom: 6px;
-}
-
-.forecast-temp {
-    font-size: 18px;
-    font-weight: 800;
-    margin: 6px 0;
-}
-
-.forecast-small {
-    font-size: 12px;
-    color: var(--text-soft);
-    line-height: 1.5;
-}
-
-.chart-box {
-    margin-top: 14px;
-    height: 260px;
-}
-
-@media (max-width: 560px) {
-    .forecast-grid {
-        grid-template-columns: 1fr;
-    }
-}
         @media (max-width: 900px) {
             .weather-layout {
                 grid-template-columns: 1fr;
@@ -497,6 +550,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .forecast-grid {
+                grid-template-columns: 1fr;
+            }
+
             .city {
                 font-size: 24px;
             }
@@ -527,6 +584,7 @@
                 <input type="text" id="cityInput" placeholder="Cari kota, contoh: Jakarta, Bandung, Tokyo" required>
                 <button type="submit">Mulai Live</button>
                 <button type="button" id="refreshBtn" class="refresh-btn">Refresh</button>
+                <button type="button" id="saveFavoriteBtn" class="save-btn">Simpan</button>
                 <button type="button" id="locationBtn" class="location-btn">Lokasi Saya</button>
                 <button type="button" id="stopBtn" class="stop-btn">Stop</button>
             </form>
@@ -537,6 +595,11 @@
             </div>
 
             <div id="error"></div>
+
+            <div id="favoritesBox" class="favorites-box">
+                <div class="favorites-title">Kota Favorit</div>
+                <div id="favoritesList" class="favorites-list"></div>
+            </div>
 
             <div id="weatherLayout" class="weather-layout">
                 <div class="main-card">
@@ -650,17 +713,19 @@
                             Masukkan kota untuk mendapatkan rekomendasi cuaca.
                         </div>
                     </div>
-                 <div class="status-card">
+
+                    <div class="status-card">
                         <div class="section-title">Forecast 3 Hari</div>
                         <div id="forecastGrid" class="forecast-grid"></div>
                     </div>
-                    
+
                     <div class="status-card">
                         <div class="section-title">Grafik Suhu Per Jam Hari Ini</div>
                         <div class="chart-box">
                             <canvas id="tempChart"></canvas>
                         </div>
-                  </div>
+                    </div>
+
                     <div id="status" class="status-card">
                         Masukkan nama kota untuk mulai memantau cuaca secara live.
                     </div>
@@ -668,7 +733,7 @@
             </div>
 
             <div class="footer-note">
-                Data cuaca berasal dari WeatherAPI.com Realtime API. Angka berubah saat API mengirim data terbaru.
+                Data cuaca berasal dari WeatherAPI.com Forecast API. Angka berubah saat API mengirim data terbaru.
             </div>
         </div>
     </div>
@@ -681,16 +746,21 @@
         const weatherLayout = document.getElementById("weatherLayout");
         const stopBtn = document.getElementById("stopBtn");
         const refreshBtn = document.getElementById("refreshBtn");
+        const saveFavoriteBtn = document.getElementById("saveFavoriteBtn");
         const locationBtn = document.getElementById("locationBtn");
         const liveIndicator = document.getElementById("liveIndicator");
         const greeting = document.getElementById("greeting");
+        const favoritesBox = document.getElementById("favoritesBox");
+        const favoritesList = document.getElementById("favoritesList");
 
         let currentCity = "";
         let liveInterval = null;
         let controller = null;
         let previousWeather = null;
         let tempChart = null;
+
         setGreeting();
+        renderFavorites();
 
         form.addEventListener("submit", function(event) {
             event.preventDefault();
@@ -727,6 +797,21 @@
 
             currentCity = city;
             getWeather(currentCity);
+        });
+
+        saveFavoriteBtn.addEventListener("click", function() {
+            const city = cityInput.value.trim();
+
+            if (!city || city === "Lokasi Saya") {
+                alert("Masukkan nama kota dulu sebelum disimpan.");
+                return;
+            }
+
+            if (!validateCity(city)) {
+                return;
+            }
+
+            saveFavoriteCity(city);
         });
 
         stopBtn.addEventListener("click", function() {
@@ -782,7 +867,7 @@
 
             liveInterval = setInterval(function() {
                 getWeather(currentCity);
-            }, 600000);
+            }, 60000);
 
             liveIndicator.style.display = "flex";
         }
@@ -851,6 +936,100 @@
                     errorDiv.textContent = "Gagal mengambil data realtime.";
                     console.log(error);
                 }
+            });
+        }
+
+        function getFavorites() {
+            const saved = localStorage.getItem("weatherFavorites");
+
+            if (!saved) {
+                return [];
+            }
+
+            try {
+                return JSON.parse(saved);
+            } catch {
+                return [];
+            }
+        }
+
+        function saveFavorites(favorites) {
+            localStorage.setItem("weatherFavorites", JSON.stringify(favorites));
+        }
+
+        function saveFavoriteCity(city) {
+            let favorites = getFavorites();
+            const cleanCity = city.trim();
+
+            const alreadyExists = favorites.some(function(item) {
+                return item.toLowerCase() === cleanCity.toLowerCase();
+            });
+
+            if (alreadyExists) {
+                alert("Kota ini sudah ada di favorit.");
+                return;
+            }
+
+            favorites.push(cleanCity);
+            saveFavorites(favorites);
+            renderFavorites();
+
+            alert(cleanCity + " berhasil disimpan ke favorit.");
+        }
+
+        function removeFavoriteCity(city) {
+            let favorites = getFavorites();
+
+            favorites = favorites.filter(function(item) {
+                return item.toLowerCase() !== city.toLowerCase();
+            });
+
+            saveFavorites(favorites);
+            renderFavorites();
+        }
+
+        function useFavoriteCity(city) {
+            cityInput.value = city;
+            currentCity = city;
+            previousWeather = null;
+
+            getWeather(currentCity);
+            startRealtime();
+        }
+
+        function renderFavorites() {
+            const favorites = getFavorites();
+
+            if (!favorites || favorites.length === 0) {
+                favoritesBox.style.display = "none";
+                favoritesList.innerHTML = "";
+                return;
+            }
+
+            favoritesBox.style.display = "block";
+            favoritesList.innerHTML = "";
+
+            favorites.forEach(function(city) {
+                const chip = document.createElement("div");
+                chip.className = "favorite-chip";
+
+                const citySpan = document.createElement("span");
+                citySpan.textContent = city;
+                citySpan.addEventListener("click", function() {
+                    useFavoriteCity(city);
+                });
+
+                const removeBtn = document.createElement("button");
+                removeBtn.className = "remove-favorite";
+                removeBtn.textContent = "×";
+                removeBtn.addEventListener("click", function(event) {
+                    event.stopPropagation();
+                    removeFavoriteCity(city);
+                });
+
+                chip.appendChild(citySpan);
+                chip.appendChild(removeBtn);
+                favoritesList.appendChild(chip);
             });
         }
 
@@ -994,102 +1173,103 @@
         }
 
         function formatForecastDate(dateString) {
-    const date = new Date(dateString);
+            const date = new Date(dateString);
 
-    return date.toLocaleDateString("id-ID", {
-        weekday: "short",
-        day: "numeric",
-        month: "short"
-    });
-}
-
-function renderForecast(forecastDays) {
-    const forecastGrid = document.getElementById("forecastGrid");
-
-    if (!forecastDays || forecastDays.length === 0) {
-        forecastGrid.innerHTML = "Forecast belum tersedia.";
-        return;
-    }
-
-    forecastGrid.innerHTML = forecastDays.map(function(day) {
-        return `
-            <div class="forecast-card">
-                <div class="forecast-date">${formatForecastDate(day.date)}</div>
-                <img src="https:${day.icon}" alt="Ikon forecast">
-                <div class="forecast-temp">${day.min_temp}°C - ${day.max_temp}°C</div>
-                <div class="forecast-small">${day.condition}</div>
-                <div class="forecast-small">Peluang hujan: ${day.chance_of_rain}%</div>
-                <div class="forecast-small">Angin max: ${day.max_wind} km/jam</div>
-            </div>
-        `;
-    }).join("");
-}
-
-function renderHourlyChart(hourlyToday) {
-    const canvas = document.getElementById("tempChart");
-
-    if (!hourlyToday || hourlyToday.length === 0) {
-        return;
-    }
-
-    const sampled = hourlyToday.filter(function(_, index) {
-        return index % 3 === 0;
-    });
-
-    const labels = sampled.map(function(hour) {
-        return hour.time.split(" ")[1];
-    });
-
-    const temps = sampled.map(function(hour) {
-        return hour.temp;
-    });
-
-    if (tempChart) {
-        tempChart.destroy();
-    }
-
-    tempChart = new Chart(canvas, {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Suhu (°C)",
-                data: temps,
-                tension: 0.35,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: "white"
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: "white"
-                    },
-                    grid: {
-                        color: "rgba(255,255,255,0.15)"
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: "white"
-                    },
-                    grid: {
-                        color: "rgba(255,255,255,0.15)"
-                    }
-                }
-            }
+            return date.toLocaleDateString("id-ID", {
+                weekday: "short",
+                day: "numeric",
+                month: "short"
+            });
         }
-    });
-}
+
+        function renderForecast(forecastDays) {
+            const forecastGrid = document.getElementById("forecastGrid");
+
+            if (!forecastDays || forecastDays.length === 0) {
+                forecastGrid.innerHTML = "Forecast belum tersedia.";
+                return;
+            }
+
+            forecastGrid.innerHTML = forecastDays.map(function(day) {
+                return `
+                    <div class="forecast-card">
+                        <div class="forecast-date">${formatForecastDate(day.date)}</div>
+                        <img src="https:${day.icon}" alt="Ikon forecast">
+                        <div class="forecast-temp">${day.min_temp}°C - ${day.max_temp}°C</div>
+                        <div class="forecast-small">${day.condition}</div>
+                        <div class="forecast-small">Peluang hujan: ${day.chance_of_rain}%</div>
+                        <div class="forecast-small">Angin max: ${day.max_wind} km/jam</div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function renderHourlyChart(hourlyToday) {
+            const canvas = document.getElementById("tempChart");
+
+            if (!hourlyToday || hourlyToday.length === 0) {
+                return;
+            }
+
+            const sampled = hourlyToday.filter(function(_, index) {
+                return index % 3 === 0;
+            });
+
+            const labels = sampled.map(function(hour) {
+                return hour.time.split(" ")[1];
+            });
+
+            const temps = sampled.map(function(hour) {
+                return hour.temp;
+            });
+
+            if (tempChart) {
+                tempChart.destroy();
+            }
+
+            tempChart = new Chart(canvas, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Suhu (°C)",
+                        data: temps,
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: "white"
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: "white"
+                            },
+                            grid: {
+                                color: "rgba(255,255,255,0.15)"
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: "white"
+                            },
+                            grid: {
+                                color: "rgba(255,255,255,0.15)"
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         function showWeather(weather) {
             const old = previousWeather;
 
@@ -1155,6 +1335,7 @@ function renderHourlyChart(hourlyToday) {
             showRecommendations(weather);
             renderForecast(weather.forecast_days || []);
             renderHourlyChart(weather.hourly_today || []);
+
             if (old && weather.last_updated === old.last_updated) {
                 document.getElementById("dataStatus").textContent =
                     "API belum mengirim nilai baru";
@@ -1166,7 +1347,7 @@ function renderHourlyChart(hourlyToday) {
                     "Data baru diterima";
 
                 document.getElementById("status").textContent =
-                    weather.status + " • Sumber: " + weather.source + " • Auto update setiap 15 detik.";
+                    weather.status + " • Sumber: " + weather.source + " • Auto update setiap 60 detik.";
             }
 
             weatherLayout.style.display = "grid";
