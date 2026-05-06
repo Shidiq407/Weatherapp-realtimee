@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WeatherLive Global Dashboard</title>
+
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#0ea5e9">
-     <link rel="icon" href="/static/icon-192.png" type="image/png">
+    <link rel="icon" href="/static/icon-192.png" type="image/png">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -55,6 +57,22 @@
 
         body.mist {
             background: linear-gradient(135deg, #475569, #94a3b8);
+        }
+
+        body.theme-ocean {
+            background: linear-gradient(135deg, #0891b2, #1d4ed8, #312e81) !important;
+        }
+
+        body.theme-sunset {
+            background: linear-gradient(135deg, #fb923c, #ec4899, #7c3aed) !important;
+        }
+
+        body.theme-dark {
+            background: linear-gradient(135deg, #020617, #111827, #1e1b4b) !important;
+        }
+
+        body.theme-clean {
+            background: linear-gradient(135deg, #93c5fd, #e0f2fe, #c7d2fe) !important;
         }
 
         .page {
@@ -121,7 +139,7 @@
 
         .search-area {
             display: grid;
-            grid-template-columns: 1fr auto auto auto auto auto;
+            grid-template-columns: 1fr auto auto auto auto auto auto auto;
             gap: 10px;
             margin-bottom: 18px;
         }
@@ -207,6 +225,50 @@
             color: #fecaca;
             font-weight: bold;
             margin: 12px 0;
+        }
+
+        .location-suggestions {
+            display: none;
+            margin-top: -6px;
+            margin-bottom: 18px;
+            padding: 12px;
+            border-radius: 20px;
+            background: rgba(15, 23, 42, 0.40);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(14px);
+        }
+
+        .location-suggestion-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            cursor: pointer;
+            color: white;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            text-align: left;
+        }
+
+        .location-suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.20);
+            transform: translateY(-1px);
+        }
+
+        .location-suggestion-main {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .location-suggestion-sub {
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .location-empty {
+            color: var(--text-soft);
+            padding: 10px;
+            font-size: 13px;
         }
 
         .favorites-box {
@@ -411,12 +473,29 @@
             margin-bottom: 12px;
         }
 
-        .recommendation-item {
+        .recommendation-item,
+        .alert-item,
+        .activity-item {
             margin-top: 9px;
             padding: 10px 12px;
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.10);
             border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .alert-danger {
+            border-color: rgba(248, 113, 113, 0.7);
+            background: rgba(239, 68, 68, 0.18);
+        }
+
+        .alert-warning {
+            border-color: rgba(251, 191, 36, 0.7);
+            background: rgba(245, 158, 11, 0.18);
+        }
+
+        .alert-safe {
+            border-color: rgba(74, 222, 128, 0.7);
+            background: rgba(34, 197, 94, 0.18);
         }
 
         .forecast-grid {
@@ -431,6 +510,13 @@
             background: rgba(255, 255, 255, 0.10);
             border: 1px solid rgba(255, 255, 255, 0.14);
             text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .forecast-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.18);
         }
 
         .forecast-card img {
@@ -512,6 +598,29 @@
             margin-top: 18px;
         }
 
+        .about-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .about-content {
+            max-width: 520px;
+            margin: 80px auto;
+            background: rgba(15,23,42,0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 24px;
+            color: white;
+        }
+
+        .about-content h2 {
+            margin-top: 0;
+        }
+
         @media (max-width: 900px) {
             .weather-layout {
                 grid-template-columns: 1fr;
@@ -567,19 +676,6 @@
     </style>
 </head>
 
-<script>
-    if ("serviceWorker" in navigator) {
-        window.addEventListener("load", function() {
-            navigator.serviceWorker.register("/sw.js")
-                .then(function() {
-                    console.log("Service Worker berhasil aktif.");
-                })
-                .catch(function(error) {
-                    console.log("Service Worker gagal:", error);
-                });
-        });
-    }
-</script>
 <body>
     <div class="page">
         <div class="hero">
@@ -596,12 +692,14 @@
 
         <div class="panel">
             <form id="weatherForm" class="search-area">
-                <input type="text" id="cityInput" placeholder="Cari kota, contoh: Jakarta, Bandung, Tokyo" required>
+                <input type="text" id="cityInput" placeholder="Cari lokasi spesifik, contoh: Sukamaju, Bogor, Indonesia" required>
                 <button type="submit">Mulai Live</button>
                 <button type="button" id="refreshBtn" class="refresh-btn">Refresh</button>
                 <button type="button" id="saveFavoriteBtn" class="save-btn">Simpan</button>
                 <button type="button" id="locationBtn" class="location-btn">Lokasi Saya</button>
                 <button type="button" id="stopBtn" class="stop-btn">Stop</button>
+                <button type="button" id="themeBtn" class="refresh-btn">Theme</button>
+                <button type="button" id="aboutBtn" class="location-btn">About</button>
             </form>
 
             <div id="loading">
@@ -611,9 +709,23 @@
 
             <div id="error"></div>
 
+            <div id="locationSuggestions" class="location-suggestions"></div>
+
             <div id="favoritesBox" class="favorites-box">
                 <div class="favorites-title">Kota Favorit</div>
                 <div id="favoritesList" class="favorites-list"></div>
+                <button type="button" id="clearFavoritesBtn" class="stop-btn" style="margin-top: 12px; padding: 10px 14px;">
+                    Hapus Semua Favorit
+                </button>
+            </div>
+
+            <div id="recentBox" class="favorites-box">
+                <div class="favorites-title">Riwayat Pencarian</div>
+                <div id="recentList" class="favorites-list"></div>
+            </div>
+
+            <div id="offlineBox" class="status-card" style="display: none; margin-bottom: 18px;">
+                Mode offline aktif. Menampilkan data terakhir yang pernah berhasil diambil.
             </div>
 
             <div id="weatherLayout" class="weather-layout">
@@ -730,8 +842,23 @@
                     </div>
 
                     <div class="status-card">
+                        <div class="section-title">Weather Alert</div>
+                        <div id="alertList">Belum ada alert cuaca.</div>
+                    </div>
+
+                    <div class="status-card">
+                        <div class="section-title">Rekomendasi Aktivitas</div>
+                        <div id="activityList">Masukkan kota untuk melihat rekomendasi aktivitas.</div>
+                    </div>
+
+                    <div class="status-card">
                         <div class="section-title">Forecast 3 Hari</div>
                         <div id="forecastGrid" class="forecast-grid"></div>
+                    </div>
+
+                    <div class="status-card" id="forecastDetailBox" style="display: none;">
+                        <div class="section-title">Detail Forecast</div>
+                        <div id="forecastDetail"></div>
                     </div>
 
                     <div class="status-card">
@@ -748,8 +875,26 @@
             </div>
 
             <div class="footer-note">
-                Data cuaca berasal dari WeatherAPI.com Forecast API. Angka berubah saat API mengirim data terbaru.
+                Data cuaca berasal dari WeatherAPI.com Forecast API. Gunakan lokasi spesifik agar hasil lebih akurat.
             </div>
+        </div>
+    </div>
+
+    <div id="aboutModal" class="about-modal">
+        <div class="about-content">
+            <h2>Tentang WeatherLive</h2>
+            <p>
+                WeatherLive Global Dashboard adalah aplikasi cuaca berbasis Progressive Web App yang menampilkan data cuaca real-time,
+                forecast 3 hari, grafik suhu per jam, kualitas udara, UV Index, smart recommendation, kota favorit, pencarian lokasi spesifik,
+                dan mode offline terbatas.
+            </p>
+            <p>
+                Data cuaca berasal dari WeatherAPI.com Forecast API dan diproses melalui backend Flask.
+            </p>
+            <p>
+                Teknologi: Flask, HTML, CSS, JavaScript, Chart.js, PythonAnywhere, GitHub, dan PWA.
+            </p>
+            <button type="button" id="closeAboutBtn" class="stop-btn">Tutup</button>
         </div>
     </div>
 
@@ -758,6 +903,7 @@
         const cityInput = document.getElementById("cityInput");
         const loading = document.getElementById("loading");
         const errorDiv = document.getElementById("error");
+        const locationSuggestions = document.getElementById("locationSuggestions");
         const weatherLayout = document.getElementById("weatherLayout");
         const stopBtn = document.getElementById("stopBtn");
         const refreshBtn = document.getElementById("refreshBtn");
@@ -767,15 +913,31 @@
         const greeting = document.getElementById("greeting");
         const favoritesBox = document.getElementById("favoritesBox");
         const favoritesList = document.getElementById("favoritesList");
+        const clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
+        const recentBox = document.getElementById("recentBox");
+        const recentList = document.getElementById("recentList");
+        const offlineBox = document.getElementById("offlineBox");
+        const alertList = document.getElementById("alertList");
+        const activityList = document.getElementById("activityList");
+        const forecastDetailBox = document.getElementById("forecastDetailBox");
+        const forecastDetail = document.getElementById("forecastDetail");
+        const themeBtn = document.getElementById("themeBtn");
+        const aboutBtn = document.getElementById("aboutBtn");
+        const aboutModal = document.getElementById("aboutModal");
+        const closeAboutBtn = document.getElementById("closeAboutBtn");
 
         let currentCity = "";
         let liveInterval = null;
         let controller = null;
         let previousWeather = null;
         let tempChart = null;
+        let searchTimeout = null;
+        let selectedLocationQuery = "";
 
         setGreeting();
         renderFavorites();
+        renderRecentSearches();
+        applySavedTheme();
 
         form.addEventListener("submit", function(event) {
             event.preventDefault();
@@ -786,11 +948,34 @@
                 return;
             }
 
-            currentCity = city;
+            currentCity = selectedLocationQuery || city;
             previousWeather = null;
+
+            locationSuggestions.style.display = "none";
+            locationSuggestions.innerHTML = "";
 
             getWeather(currentCity);
             startRealtime();
+        });
+
+        cityInput.addEventListener("input", function() {
+            const query = cityInput.value.trim();
+
+            selectedLocationQuery = "";
+
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            if (query.length < 3 || query === "Lokasi Saya") {
+                locationSuggestions.style.display = "none";
+                locationSuggestions.innerHTML = "";
+                return;
+            }
+
+            searchTimeout = setTimeout(function() {
+                searchLocations(query);
+            }, 500);
         });
 
         refreshBtn.addEventListener("click", function() {
@@ -810,7 +995,7 @@
                 return;
             }
 
-            currentCity = city;
+            currentCity = selectedLocationQuery || currentCity || city;
             getWeather(currentCity);
         });
 
@@ -848,9 +1033,13 @@
                     const lon = position.coords.longitude;
 
                     currentCity = lat + "," + lon;
+                    selectedLocationQuery = currentCity;
                     cityInput.value = "Lokasi Saya";
 
                     previousWeather = null;
+                    locationSuggestions.style.display = "none";
+                    locationSuggestions.innerHTML = "";
+
                     getWeather(currentCity);
                     startRealtime();
                 },
@@ -859,6 +1048,31 @@
                     alert("Izin lokasi ditolak atau gagal membaca lokasi.");
                 }
             );
+        });
+
+        clearFavoritesBtn.addEventListener("click", function() {
+            if (confirm("Yakin mau menghapus semua kota favorit?")) {
+                localStorage.removeItem("weatherFavorites");
+                renderFavorites();
+            }
+        });
+
+        themeBtn.addEventListener("click", function() {
+            cycleTheme();
+        });
+
+        aboutBtn.addEventListener("click", function() {
+            aboutModal.style.display = "block";
+        });
+
+        closeAboutBtn.addEventListener("click", function() {
+            aboutModal.style.display = "none";
+        });
+
+        aboutModal.addEventListener("click", function(event) {
+            if (event.target === aboutModal) {
+                aboutModal.style.display = "none";
+            }
         });
 
         function setGreeting() {
@@ -911,12 +1125,72 @@
                 return true;
             }
 
-            if (!/^[a-zA-Z\s,.\-]+$/.test(city) && !city.includes(",")) {
-                alert("Input kota tidak valid.");
+            const coordinatePattern = /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/;
+            const textPattern = /^[\p{L}\s,.'’\-\(\)]+$/u;
+
+            if (!coordinatePattern.test(city) && !textPattern.test(city)) {
+                alert("Input lokasi tidak valid.");
                 return false;
             }
 
             return true;
+        }
+
+        function searchLocations(query) {
+            fetch(`/api/search-location?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.locations.length > 0) {
+                        renderLocationSuggestions(data.locations);
+                    } else {
+                        locationSuggestions.style.display = "block";
+                        locationSuggestions.innerHTML =
+                            '<div class="location-empty">Lokasi belum ditemukan. Coba tulis lebih spesifik, misalnya desa, kabupaten, Indonesia.</div>';
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                    locationSuggestions.style.display = "none";
+                });
+        }
+
+        function renderLocationSuggestions(locations) {
+            locationSuggestions.style.display = "block";
+            locationSuggestions.innerHTML = "";
+
+            locations.forEach(function(location) {
+                const item = document.createElement("div");
+                item.className = "location-suggestion-item";
+
+                const main = document.createElement("div");
+                main.className = "location-suggestion-main";
+                main.textContent = location.name || "-";
+
+                const sub = document.createElement("div");
+                sub.className = "location-suggestion-sub";
+                sub.textContent = [location.region, location.country].filter(Boolean).join(", ");
+
+                item.appendChild(main);
+                item.appendChild(sub);
+
+                item.addEventListener("click", function() {
+                    const label = location.label;
+                    const query = location.query;
+
+                    cityInput.value = label;
+                    selectedLocationQuery = query;
+                    currentCity = query;
+
+                    locationSuggestions.style.display = "none";
+                    locationSuggestions.innerHTML = "";
+
+                    previousWeather = null;
+                    getWeather(currentCity);
+                    startRealtime();
+                });
+
+                locationSuggestions.appendChild(item);
+            });
         }
 
         function getWeather(city) {
@@ -937,6 +1211,9 @@
                 loading.style.display = "none";
 
                 if (data.success) {
+                    offlineBox.style.display = "none";
+                    saveLastWeather(data.weather);
+                    saveRecentSearch(cityInput.value.trim());
                     showWeather(data.weather);
                 } else {
                     weatherLayout.style.display = "none";
@@ -947,8 +1224,8 @@
                 loading.style.display = "none";
 
                 if (error.name !== "AbortError") {
-                    weatherLayout.style.display = "none";
-                    errorDiv.textContent = "Gagal mengambil data realtime.";
+                    errorDiv.textContent = "Gagal mengambil data realtime. Mencoba menampilkan data terakhir...";
+                    showOfflineData();
                     console.log(error);
                 }
             });
@@ -972,31 +1249,31 @@
             localStorage.setItem("weatherFavorites", JSON.stringify(favorites));
         }
 
-function saveFavoriteCity(city) {
-    let favorites = getFavorites();
-    const cleanCity = city.trim();
-    const maxFavorites = 10;
+        function saveFavoriteCity(city) {
+            let favorites = getFavorites();
+            const cleanCity = city.trim();
+            const maxFavorites = 10;
 
-    const alreadyExists = favorites.some(function(item) {
-        return item.toLowerCase() === cleanCity.toLowerCase();
-    });
+            const alreadyExists = favorites.some(function(item) {
+                return item.toLowerCase() === cleanCity.toLowerCase();
+            });
 
-    if (alreadyExists) {
-        alert("Kota ini sudah ada di favorit.");
-        return;
-    }
+            if (alreadyExists) {
+                alert("Kota ini sudah ada di favorit.");
+                return;
+            }
 
-    if (favorites.length >= maxFavorites) {
-        alert("Favorit sudah penuh. Maksimal " + maxFavorites + " kota. Hapus salah satu dulu ya.");
-        return;
-    }
+            if (favorites.length >= maxFavorites) {
+                alert("Favorit sudah penuh. Maksimal " + maxFavorites + " kota. Hapus salah satu dulu ya.");
+                return;
+            }
 
-    favorites.push(cleanCity);
-    saveFavorites(favorites);
-    renderFavorites();
+            favorites.push(cleanCity);
+            saveFavorites(favorites);
+            renderFavorites();
 
-    alert(cleanCity + " berhasil disimpan ke favorit.");
-}
+            alert(cleanCity + " berhasil disimpan ke favorit.");
+        }
 
         function removeFavoriteCity(city) {
             let favorites = getFavorites();
@@ -1012,6 +1289,7 @@ function saveFavoriteCity(city) {
         function useFavoriteCity(city) {
             cityInput.value = city;
             currentCity = city;
+            selectedLocationQuery = "";
             previousWeather = null;
 
             getWeather(currentCity);
@@ -1051,6 +1329,99 @@ function saveFavoriteCity(city) {
                 chip.appendChild(citySpan);
                 chip.appendChild(removeBtn);
                 favoritesList.appendChild(chip);
+            });
+        }
+
+        function saveLastWeather(weather) {
+            localStorage.setItem("lastWeatherData", JSON.stringify(weather));
+        }
+
+        function getLastWeather() {
+            const saved = localStorage.getItem("lastWeatherData");
+
+            if (!saved) {
+                return null;
+            }
+
+            try {
+                return JSON.parse(saved);
+            } catch {
+                return null;
+            }
+        }
+
+        function showOfflineData() {
+            const lastWeather = getLastWeather();
+
+            if (lastWeather) {
+                offlineBox.style.display = "block";
+                showWeather(lastWeather);
+                document.getElementById("status").textContent =
+                    "Mode offline. Data yang tampil adalah data terakhir yang tersimpan di perangkat ini.";
+            }
+        }
+
+        function getRecentSearches() {
+            const saved = localStorage.getItem("weatherRecentSearches");
+
+            if (!saved) {
+                return [];
+            }
+
+            try {
+                return JSON.parse(saved);
+            } catch {
+                return [];
+            }
+        }
+
+        function saveRecentSearch(city) {
+            if (!city || city === "Lokasi Saya" || city.includes(",")) {
+                return;
+            }
+
+            let recent = getRecentSearches();
+
+            recent = recent.filter(function(item) {
+                return item.toLowerCase() !== city.toLowerCase();
+            });
+
+            recent.unshift(city);
+
+            if (recent.length > 6) {
+                recent = recent.slice(0, 6);
+            }
+
+            localStorage.setItem("weatherRecentSearches", JSON.stringify(recent));
+            renderRecentSearches();
+        }
+
+        function renderRecentSearches() {
+            const recent = getRecentSearches();
+
+            if (!recent || recent.length === 0) {
+                recentBox.style.display = "none";
+                recentList.innerHTML = "";
+                return;
+            }
+
+            recentBox.style.display = "block";
+            recentList.innerHTML = "";
+
+            recent.forEach(function(city) {
+                const chip = document.createElement("div");
+                chip.className = "favorite-chip";
+                chip.textContent = city;
+                chip.addEventListener("click", function() {
+                    cityInput.value = city;
+                    currentCity = city;
+                    selectedLocationQuery = "";
+                    previousWeather = null;
+                    getWeather(currentCity);
+                    startRealtime();
+                });
+
+                recentList.appendChild(chip);
             });
         }
 
@@ -1157,7 +1528,38 @@ function saveFavoriteCity(city) {
                 .replace("/", " / ");
         }
 
+        function getSavedTheme() {
+            return localStorage.getItem("weatherTheme") || "auto";
+        }
+
+        function applySavedTheme() {
+            const theme = getSavedTheme();
+
+            document.body.classList.remove("theme-ocean", "theme-sunset", "theme-dark", "theme-clean");
+
+            if (theme !== "auto") {
+                document.body.classList.add("theme-" + theme);
+            }
+        }
+
+        function cycleTheme() {
+            const themes = ["auto", "ocean", "sunset", "dark", "clean"];
+            const current = getSavedTheme();
+            const currentIndex = themes.indexOf(current);
+            const nextTheme = themes[(currentIndex + 1) % themes.length];
+
+            localStorage.setItem("weatherTheme", nextTheme);
+            applySavedTheme();
+
+            alert("Theme sekarang: " + nextTheme);
+        }
+
         function updateBackground(weather) {
+            if (getSavedTheme() !== "auto") {
+                applySavedTheme();
+                return;
+            }
+
             const condition = String(weather.condition || "").toLowerCase();
 
             document.body.className = "";
@@ -1193,6 +1595,97 @@ function saveFavoriteCity(city) {
             }
         }
 
+        function renderWeatherAlerts(weather) {
+            const alerts = [];
+
+            const uv = Number(weather.uv || 0);
+            const wind = Number(weather.wind_speed || 0);
+            const gust = Number(weather.gust || 0);
+            const pm25 = Number(weather.air_quality_pm25 || 0);
+            const feelsLike = Number(weather.feels_like || 0);
+            const precip = Number(weather.precip || 0);
+            const forecastRain = weather.forecast_days && weather.forecast_days[0]
+                ? Number(weather.forecast_days[0].chance_of_rain || 0)
+                : 0;
+
+            if (uv >= 8) {
+                alerts.push({ type: "danger", text: "UV sangat tinggi. Hindari paparan matahari terlalu lama." });
+            } else if (uv >= 6) {
+                alerts.push({ type: "warning", text: "UV cukup tinggi. Gunakan pelindung kulit saat keluar." });
+            }
+
+            if (wind >= 30 || gust >= 40) {
+                alerts.push({ type: "warning", text: "Angin cukup kencang. Hati-hati saat berkendara." });
+            }
+
+            if (pm25 >= 55) {
+                alerts.push({ type: "danger", text: "Kualitas udara kurang baik. Gunakan masker jika keluar rumah." });
+            } else if (pm25 >= 35) {
+                alerts.push({ type: "warning", text: "Kualitas udara sedang. Orang sensitif sebaiknya mengurangi aktivitas luar." });
+            }
+
+            if (feelsLike >= 35) {
+                alerts.push({ type: "warning", text: "Suhu terasa sangat panas. Perbanyak minum air." });
+            }
+
+            if (precip > 0 || forecastRain >= 70) {
+                alerts.push({ type: "warning", text: "Ada potensi hujan. Siapkan payung atau jas hujan." });
+            }
+
+            if (alerts.length === 0) {
+                alertList.innerHTML = '<div class="alert-item alert-safe">Kondisi cuaca relatif aman untuk aktivitas harian.</div>';
+                return;
+            }
+
+            alertList.innerHTML = alerts.map(function(alert) {
+                const className = alert.type === "danger" ? "alert-danger" : "alert-warning";
+                return '<div class="alert-item ' + className + '">⚠️ ' + alert.text + '</div>';
+            }).join("");
+        }
+
+        function renderActivityRecommendations(weather) {
+            const activities = [];
+
+            const condition = String(weather.condition || "").toLowerCase();
+            const uv = Number(weather.uv || 0);
+            const wind = Number(weather.wind_speed || 0);
+            const pm25 = Number(weather.air_quality_pm25 || 0);
+            const feelsLike = Number(weather.feels_like || 0);
+            const rainChance = weather.forecast_days && weather.forecast_days[0]
+                ? Number(weather.forecast_days[0].chance_of_rain || 0)
+                : 0;
+
+            if (condition.includes("rain") || condition.includes("hujan") || rainChance >= 70) {
+                activities.push("Kurang cocok untuk aktivitas outdoor lama. Bawa payung jika keluar.");
+            } else {
+                activities.push("Cukup cocok untuk aktivitas luar ruangan ringan.");
+            }
+
+            if (uv >= 6) {
+                activities.push("Gunakan sunscreen, topi, atau kacamata hitam jika keluar siang hari.");
+            }
+
+            if (pm25 >= 35) {
+                activities.push("Gunakan masker jika beraktivitas di jalan raya atau area padat kendaraan.");
+            }
+
+            if (wind >= 30) {
+                activities.push("Kurangi aktivitas yang sensitif terhadap angin seperti bersepeda jauh atau membawa barang ringan.");
+            }
+
+            if (feelsLike >= 33) {
+                activities.push("Hindari olahraga berat saat siang. Pilih pagi atau sore.");
+            }
+
+            if (activities.length === 0) {
+                activities.push("Kondisi cukup nyaman untuk kegiatan harian.");
+            }
+
+            activityList.innerHTML = activities.map(function(item) {
+                return '<div class="activity-item">✅ ' + item + '</div>';
+            }).join("");
+        }
+
         function formatForecastDate(dateString) {
             const date = new Date(dateString);
 
@@ -1203,6 +1696,25 @@ function saveFavoriteCity(city) {
             });
         }
 
+        function renderForecastDetail(day) {
+            forecastDetailBox.style.display = "block";
+
+            forecastDetail.innerHTML = `
+                <div class="recommendation-item">
+                    <strong>${formatForecastDate(day.date)}</strong><br>
+                    Kondisi: ${day.condition}<br>
+                    Suhu rata-rata: ${day.avg_temp}°C<br>
+                    Suhu minimum: ${day.min_temp}°C<br>
+                    Suhu maksimum: ${day.max_temp}°C<br>
+                    Peluang hujan: ${day.chance_of_rain}%<br>
+                    Total curah hujan: ${day.total_precip} mm<br>
+                    Angin maksimum: ${day.max_wind} km/jam<br>
+                    Kelembapan rata-rata: ${day.avg_humidity}%<br>
+                    UV Index: ${day.uv}
+                </div>
+            `;
+        }
+
         function renderForecast(forecastDays) {
             const forecastGrid = document.getElementById("forecastGrid");
 
@@ -1211,18 +1723,28 @@ function saveFavoriteCity(city) {
                 return;
             }
 
-            forecastGrid.innerHTML = forecastDays.map(function(day) {
-                return `
-                    <div class="forecast-card">
-                        <div class="forecast-date">${formatForecastDate(day.date)}</div>
-                        <img src="https:${day.icon}" alt="Ikon forecast">
-                        <div class="forecast-temp">${day.min_temp}°C - ${day.max_temp}°C</div>
-                        <div class="forecast-small">${day.condition}</div>
-                        <div class="forecast-small">Peluang hujan: ${day.chance_of_rain}%</div>
-                        <div class="forecast-small">Angin max: ${day.max_wind} km/jam</div>
-                    </div>
+            forecastGrid.innerHTML = "";
+
+            forecastDays.forEach(function(day) {
+                const card = document.createElement("div");
+                card.className = "forecast-card";
+
+                card.innerHTML = `
+                    <div class="forecast-date">${formatForecastDate(day.date)}</div>
+                    <img src="https:${day.icon}" alt="Ikon forecast">
+                    <div class="forecast-temp">${day.min_temp}°C - ${day.max_temp}°C</div>
+                    <div class="forecast-small">${day.condition}</div>
+                    <div class="forecast-small">Peluang hujan: ${day.chance_of_rain}%</div>
+                    <div class="forecast-small">Angin max: ${day.max_wind} km/jam</div>
+                    <div class="forecast-small">Klik untuk detail</div>
                 `;
-            }).join("");
+
+                card.addEventListener("click", function() {
+                    renderForecastDetail(day);
+                });
+
+                forecastGrid.appendChild(card);
+            });
         }
 
         function renderHourlyChart(hourlyToday) {
@@ -1296,20 +1818,11 @@ function saveFavoriteCity(city) {
 
             updateBackground(weather);
 
-            document.getElementById("cityName").textContent =
-                weather.city;
-
-            document.getElementById("countryName").textContent =
-                weather.region + ", " + weather.country;
-
-            document.getElementById("timezone").textContent =
-                formatTimezone(weather.timezone);
-
-            document.getElementById("weatherIcon").src =
-                "https:" + weather.icon;
-
-            document.getElementById("condition").textContent =
-                weather.condition;
+            document.getElementById("cityName").textContent = weather.city;
+            document.getElementById("countryName").textContent = weather.region + ", " + weather.country;
+            document.getElementById("timezone").textContent = formatTimezone(weather.timezone);
+            document.getElementById("weatherIcon").src = "https:" + weather.icon;
+            document.getElementById("condition").textContent = weather.condition;
 
             animateNumber(
                 "temperature",
@@ -1344,16 +1857,13 @@ function saveFavoriteCity(city) {
             document.getElementById("airQualitySub").innerHTML =
                 "PM10 " + weather.air_quality_pm10 + " • " + getAirQualityStatus(weather.air_quality_pm25);
 
-            document.getElementById("localtime").textContent =
-                weather.localtime;
-
-            document.getElementById("lastUpdated").textContent =
-                weather.last_updated;
-
-            document.getElementById("requestTime").textContent =
-                weather.request_time;
+            document.getElementById("localtime").textContent = weather.localtime;
+            document.getElementById("lastUpdated").textContent = weather.last_updated;
+            document.getElementById("requestTime").textContent = weather.request_time;
 
             showRecommendations(weather);
+            renderWeatherAlerts(weather);
+            renderActivityRecommendations(weather);
             renderForecast(weather.forecast_days || []);
             renderHourlyChart(weather.hourly_today || []);
 
@@ -1373,6 +1883,18 @@ function saveFavoriteCity(city) {
 
             weatherLayout.style.display = "grid";
             previousWeather = weather;
+        }
+
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function() {
+                navigator.serviceWorker.register("/sw.js")
+                    .then(function() {
+                        console.log("Service Worker berhasil aktif.");
+                    })
+                    .catch(function(error) {
+                        console.log("Service Worker gagal:", error);
+                    });
+            });
         }
     </script>
 </body>
