@@ -1,10 +1,12 @@
 import os
-from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
+from datetime import datetime
+
 import requests
+from flask import Flask, jsonify, make_response, render_template, request, send_from_directory
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from datetime import datetime
 from waitress import serve
+
 
 app = Flask(__name__)
 
@@ -13,7 +15,8 @@ API_KEY = os.getenv("WEATHER_API_KEY")
 if not API_KEY:
     raise ValueError("WEATHER_API_KEY belum diatur. Masukkan API key lewat environment variable.")
 
-BASE_URL = "https://api.weatherapi.com/v1/forecast.json"
+FORECAST_URL = "https://api.weatherapi.com/v1/forecast.json"
+SEARCH_URL = "https://api.weatherapi.com/v1/search.json"
 
 session = requests.Session()
 
@@ -45,6 +48,7 @@ def service_worker():
     response.headers["Cache-Control"] = "no-cache"
     return response
 
+
 @app.route("/api/weather")
 def weather_api():
     city = request.args.get("city", "").strip()
@@ -52,11 +56,75 @@ def weather_api():
     if not city:
         return jsonify({
             "success": False,
-            "error": "Nama kota tidak boleh kosong."
+            "error": "Nama lokasi tidak boleh kosong."
         })
 
     result = get_realtime_weather(city)
     return jsonify(result)
+
+
+@app.route("/api/search-location")
+def search_location():
+    query = request.args.get("q", "").strip()
+
+    if not query:
+        return jsonify({
+            "success": False,
+            "locations": [],
+            "error": "Masukkan nama lokasi."
+        })
+
+    params = {
+        "key": API_KEY,
+        "q": query
+    }
+
+    try:
+        response = session.get(SEARCH_URL, params=params, timeout=5)
+        data = response.json()
+
+        if response.status_code == 200:
+            locations = []
+
+            for item in data:
+                name = item.get("name", "")
+                region = item.get("region", "")
+                country = item.get("country", "")
+                lat = item.get("lat", "")
+                lon = item.get("lon", "")
+
+                label_parts = [name, region, country]
+                label = ", ".join([part for part in label_parts if part])
+
+                locations.append({
+                    "name": name,
+                    "region": region,
+                    "country": country,
+                    "lat": lat,
+                    "lon": lon,
+                    "label": label,
+                    "query": f"{lat},{lon}"
+                })
+
+            return jsonify({
+                "success": True,
+                "locations": locations
+            })
+
+        return jsonify({
+            "success": False,
+            "locations": [],
+            "error": "Lokasi tidak ditemukan."
+        })
+
+    except Exception as e:
+        print("Search location error:", e)
+
+        return jsonify({
+            "success": False,
+            "locations": [],
+            "error": "Gagal mencari lokasi."
+        })
 
 
 def generate_recommendation(weather):
@@ -71,7 +139,13 @@ def generate_recommendation(weather):
     precip = float(weather.get("precip", 0))
     pm25 = float(weather.get("air_quality_pm25", 0))
 
-    if "hujan" in condition or "rain" in condition or precip > 0:
+    forecast_days = weather.get("forecast_days", [])
+    chance_of_rain = 0
+
+    if forecast_days:
+        chance_of_rain = float(forecast_days[0].get("chance_of_rain", 0))
+
+    if "hujan" in condition or "rain" in condition or precip > 0 or chance_of_rain >= 70:
         recommendations.append("Bawa payung atau jas hujan karena ada indikasi hujan di lokasi ini.")
 
     if uv >= 8:
@@ -116,13 +190,13 @@ def get_realtime_weather(city):
     }
 
     try:
-        response = session.get(BASE_URL, params=params, timeout=5)
+        response = session.get(FORECAST_URL, params=params, timeout=5)
         data = response.json()
 
         if response.status_code == 200:
             current = data["current"]
             location = data["location"]
-            condition = current["condition"]
+            condition = current.get("condition", {})
             air_quality = current.get("air_quality", {})
             forecast_data = data.get("forecast", {}).get("forecastday", [])
 
@@ -212,22 +286,21 @@ def get_realtime_weather(city):
                 "weather": weather
             }
 
-        else:
-            error_message = data.get("error", {}).get("message", "Data cuaca tidak ditemukan.")
+        error_message = data.get("error", {}).get("message", "Data cuaca tidak ditemukan.")
 
-            if city.lower() in last_good_data:
-                backup = last_good_data[city.lower()].copy()
-                backup["status"] = "API bermasalah, menampilkan data terakhir"
-
-                return {
-                    "success": True,
-                    "weather": backup
-                }
+        if city.lower() in last_good_data:
+            backup = last_good_data[city.lower()].copy()
+            backup["status"] = "API bermasalah, menampilkan data terakhir"
 
             return {
-                "success": False,
-                "error": error_message
+                "success": True,
+                "weather": backup
             }
+
+        return {
+            "success": False,
+            "error": error_message
+        }
 
     except requests.exceptions.Timeout:
         if city.lower() in last_good_data:
