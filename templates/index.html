@@ -231,44 +231,89 @@
             display: none;
             margin-top: -6px;
             margin-bottom: 18px;
-            padding: 12px;
-            border-radius: 20px;
-            background: rgba(15, 23, 42, 0.40);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(14px);
+            padding: 14px;
+            border-radius: 22px;
+            background: rgba(15, 23, 42, 0.50);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(16px);
+        }
+
+        .suggestion-title {
+            font-weight: bold;
+            color: white;
+            margin-bottom: 12px;
+            font-size: 15px;
         }
 
         .location-suggestion-item {
-            padding: 12px 14px;
-            border-radius: 14px;
+            padding: 14px;
+            border-radius: 18px;
             cursor: pointer;
             color: white;
             transition: 0.2s;
-            border: 1px solid transparent;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             text-align: left;
+            background: rgba(255, 255, 255, 0.10);
+            margin-bottom: 10px;
         }
 
         .location-suggestion-item:hover {
-            background: rgba(255, 255, 255, 0.16);
-            border-color: rgba(255, 255, 255, 0.20);
-            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.28);
+            transform: translateY(-2px);
         }
 
         .location-suggestion-main {
             font-weight: bold;
-            font-size: 14px;
+            font-size: 15px;
+            margin-bottom: 5px;
         }
 
         .location-suggestion-sub {
-            margin-top: 4px;
             font-size: 12px;
             color: var(--text-soft);
+            line-height: 1.5;
+        }
+
+        .location-suggestion-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .source-badge {
+            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: var(--text-soft);
+        }
+
+        .pick-location-btn {
+            padding: 9px 12px;
+            border-radius: 12px;
+            background: rgba(34, 197, 94, 0.95);
+            color: white;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .pick-location-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.08);
         }
 
         .location-empty {
             color: var(--text-soft);
             padding: 10px;
             font-size: 13px;
+            line-height: 1.5;
         }
 
         .favorites-box {
@@ -620,94 +665,7 @@
         .about-content h2 {
             margin-top: 0;
         }
-        .location-suggestions {
-    display: none;
-    margin-top: -6px;
-    margin-bottom: 18px;
-    padding: 14px;
-    border-radius: 22px;
-    background: rgba(15, 23, 42, 0.50);
-    border: 1px solid rgba(255, 255, 255, 0.20);
-    backdrop-filter: blur(16px);
-}
 
-.suggestion-title {
-    font-weight: bold;
-    color: white;
-    margin-bottom: 12px;
-    font-size: 15px;
-}
-
-.location-suggestion-item {
-    padding: 14px;
-    border-radius: 18px;
-    cursor: pointer;
-    color: white;
-    transition: 0.2s;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    text-align: left;
-    background: rgba(255, 255, 255, 0.10);
-    margin-bottom: 10px;
-}
-
-.location-suggestion-item:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.28);
-    transform: translateY(-2px);
-}
-
-.location-suggestion-main {
-    font-weight: bold;
-    font-size: 15px;
-    margin-bottom: 5px;
-}
-
-.location-suggestion-sub {
-    font-size: 12px;
-    color: var(--text-soft);
-    line-height: 1.5;
-}
-
-.location-suggestion-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-}
-
-.source-badge {
-    font-size: 11px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: var(--text-soft);
-}
-
-.pick-location-btn {
-    padding: 9px 12px;
-    border-radius: 12px;
-    background: rgba(34, 197, 94, 0.95);
-    color: white;
-    border: none;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.pick-location-btn:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.08);
-}
-
-.location-empty {
-    color: var(--text-soft);
-    padding: 10px;
-    font-size: 13px;
-    line-height: 1.5;
-}
         @media (max-width: 900px) {
             .weather-layout {
                 grid-template-columns: 1fr;
@@ -1063,7 +1021,7 @@
 
             searchTimeout = setTimeout(function() {
                 searchLocations(query);
-            }, 1200);
+            }, 900);
         });
 
         refreshBtn.addEventListener("click", function() {
@@ -1225,22 +1183,71 @@
         }
 
         function searchLocations(query) {
-            fetch(`/api/search-location?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.locations.length > 0) {
-                        renderLocationSuggestions(data.locations);
-                    } else {
-                        searchLocationsOSM(query);
+            locationSuggestions.style.display = "block";
+            locationSuggestions.innerHTML =
+                '<div class="location-empty">Mencari semua lokasi yang berkaitan...</div>';
+
+            Promise.allSettled([
+                searchWeatherApiLocations(query),
+                searchOsmLocations(query)
+            ])
+            .then(function(results) {
+                let allLocations = [];
+
+                results.forEach(function(result) {
+                    if (result.status === "fulfilled" && Array.isArray(result.value)) {
+                        allLocations = allLocations.concat(result.value);
                     }
+                });
+
+                const uniqueLocations = removeDuplicateLocations(allLocations);
+
+                if (uniqueLocations.length > 0) {
+                    renderLocationSuggestions(uniqueLocations);
+                } else {
+                    locationSuggestions.style.display = "block";
+                    locationSuggestions.innerHTML =
+                        '<div class="location-empty">Lokasi belum ditemukan. Coba tulis lebih lengkap, contoh: Sarabau, Plered, Cirebon, Jawa Barat, Indonesia.</div>';
+                }
+            })
+            .catch(function(error) {
+                console.log(error);
+                locationSuggestions.style.display = "block";
+                locationSuggestions.innerHTML =
+                    '<div class="location-empty">Gagal mencari lokasi. Coba tulis lokasi lebih lengkap.</div>';
+            });
+        }
+
+        function searchWeatherApiLocations(query) {
+            return fetch(`/api/search-location?q=${encodeURIComponent(query)}`)
+                .then(function(response) {
+                    return response.json();
                 })
-                .catch(error => {
-                    console.log(error);
-                    searchLocationsOSM(query);
+                .then(function(data) {
+                    if (data.success && data.locations.length > 0) {
+                        return data.locations.map(function(location) {
+                            return {
+                                name: location.name,
+                                region: location.region,
+                                country: location.country,
+                                lat: location.lat,
+                                lon: location.lon,
+                                label: location.label,
+                                query: location.query,
+                                source: "WeatherAPI"
+                            };
+                        });
+                    }
+
+                    return [];
+                })
+                .catch(function(error) {
+                    console.log("WeatherAPI search error:", error);
+                    return [];
                 });
         }
 
-        function searchLocationsOSM(query) {
+        function searchOsmLocations(query) {
             let osmQuery = query;
 
             if (!query.toLowerCase().includes("indonesia")) {
@@ -1251,22 +1258,21 @@
                 "https://nominatim.openstreetmap.org/search" +
                 "?format=jsonv2" +
                 "&addressdetails=1" +
-                "&limit=8" +
+                "&limit=15" +
                 "&countrycodes=id" +
                 "&accept-language=id" +
                 "&q=" + encodeURIComponent(osmQuery);
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
+            return fetch(url)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
                     if (!data || data.length === 0) {
-                        locationSuggestions.style.display = "block";
-                        locationSuggestions.innerHTML =
-                            '<div class="location-empty">Lokasi belum ditemukan. Coba tulis lebih lengkap, contoh: Sarabau, Plered, Cirebon, Jawa Barat, Indonesia.</div>';
-                        return;
+                        return [];
                     }
 
-                    const locations = data.map(function(item) {
+                    return data.map(function(item) {
                         const address = item.address || {};
 
                         const name =
@@ -1282,13 +1288,13 @@
                             query;
 
                         const regionParts = [
-                        address.road,
-                        address.suburb,
-                        address.city_district,
-                        address.municipality,
-                        address.county,
-                        address.city,
-                        address.state
+                            address.road,
+                            address.suburb,
+                            address.city_district,
+                            address.municipality,
+                            address.county,
+                            address.city,
+                            address.state
                         ];
 
                         const region = regionParts
@@ -1310,94 +1316,114 @@
                             source: "OpenStreetMap"
                         };
                     });
-
-                    renderLocationSuggestions(locations);
                 })
-                .catch(error => {
-                    console.log(error);
-                    locationSuggestions.style.display = "block";
-                    locationSuggestions.innerHTML =
-                        '<div class="location-empty">Gagal mencari lokasi detail. Coba tulis format lengkap: desa, kecamatan, kabupaten, provinsi, Indonesia.</div>';
+                .catch(function(error) {
+                    console.log("OSM search error:", error);
+                    return [];
                 });
         }
-function renderLocationSuggestions(locations) {
-    function selectSuggestedLocation(location) {
-    const label = location.label || [location.name, location.region, location.country]
-        .filter(Boolean)
-        .join(", ");
 
-    const query = location.query;
+        function removeDuplicateLocations(locations) {
+            const seen = new Set();
+            const unique = [];
 
-    cityInput.value = label;
-    selectedLocationQuery = query;
-    currentCity = query;
+            locations.forEach(function(location) {
+                const lat = Number(location.lat);
+                const lon = Number(location.lon);
 
-    locationSuggestions.style.display = "none";
-    locationSuggestions.innerHTML = "";
+                if (Number.isNaN(lat) || Number.isNaN(lon)) {
+                    return;
+                }
 
-    previousWeather = null;
+                const key = lat.toFixed(4) + "," + lon.toFixed(4);
 
-    getWeather(currentCity);
-    startRealtime();
-}
-    
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    unique.push(location);
+                }
+            });
 
-    locationSuggestions.style.display = "block";
-    locationSuggestions.innerHTML = "";
+            return unique;
+        }
 
-    const title = document.createElement("div");
-    title.className = "suggestion-title";
-    title.textContent = "Pilih lokasi yang sesuai:";
-    locationSuggestions.appendChild(title);
+        function renderLocationSuggestions(locations) {
+            locationSuggestions.style.display = "block";
+            locationSuggestions.innerHTML = "";
 
-    locations.forEach(function(location) {
-        const item = document.createElement("div");
-        item.className = "location-suggestion-item";
+            const title = document.createElement("div");
+            title.className = "suggestion-title";
+            title.textContent = "Pilih lokasi yang sesuai:";
+            locationSuggestions.appendChild(title);
 
-        const main = document.createElement("div");
-        main.className = "location-suggestion-main";
-        main.textContent = location.name || "-";
+            locations.forEach(function(location) {
+                const item = document.createElement("div");
+                item.className = "location-suggestion-item";
 
-        const sub = document.createElement("div");
-        sub.className = "location-suggestion-sub";
+                const main = document.createElement("div");
+                main.className = "location-suggestion-main";
+                main.textContent = location.name || "-";
 
-        const fullAddress = location.label || [location.name, location.region, location.country]
-            .filter(Boolean)
-            .join(", ");
+                const sub = document.createElement("div");
+                sub.className = "location-suggestion-sub";
 
-        sub.textContent = fullAddress;
+                const fullAddress = location.label || [location.name, location.region, location.country]
+                    .filter(Boolean)
+                    .join(", ");
 
-        const bottom = document.createElement("div");
-        bottom.className = "location-suggestion-bottom";
+                sub.textContent = fullAddress;
 
-        const source = document.createElement("div");
-        source.className = "source-badge";
-        source.textContent = location.source ? location.source : "WeatherAPI";
+                const bottom = document.createElement("div");
+                bottom.className = "location-suggestion-bottom";
 
-        const pickBtn = document.createElement("button");
-        pickBtn.type = "button";
-        pickBtn.className = "pick-location-btn";
-        pickBtn.textContent = "Pilih & Mulai Live";
+                const source = document.createElement("div");
+                source.className = "source-badge";
+                source.textContent = location.source ? location.source : "WeatherAPI";
 
-        pickBtn.addEventListener("click", function(event) {
-            event.stopPropagation();
-            selectSuggestedLocation(location);
-        });
+                const pickBtn = document.createElement("button");
+                pickBtn.type = "button";
+                pickBtn.className = "pick-location-btn";
+                pickBtn.textContent = "Pilih & Mulai Live";
 
-        item.addEventListener("click", function() {
-            selectSuggestedLocation(location);
-        });
+                pickBtn.addEventListener("click", function(event) {
+                    event.stopPropagation();
+                    selectSuggestedLocation(location);
+                });
 
-        bottom.appendChild(source);
-        bottom.appendChild(pickBtn);
+                item.addEventListener("click", function() {
+                    selectSuggestedLocation(location);
+                });
 
-        item.appendChild(main);
-        item.appendChild(sub);
-        item.appendChild(bottom);
+                bottom.appendChild(source);
+                bottom.appendChild(pickBtn);
 
-        locationSuggestions.appendChild(item);
-    });
-} 
+                item.appendChild(main);
+                item.appendChild(sub);
+                item.appendChild(bottom);
+
+                locationSuggestions.appendChild(item);
+            });
+        }
+
+        function selectSuggestedLocation(location) {
+            const label = location.label || [location.name, location.region, location.country]
+                .filter(Boolean)
+                .join(", ");
+
+            const query = location.query;
+
+            cityInput.value = label;
+            selectedLocationQuery = query;
+            currentCity = query;
+
+            locationSuggestions.style.display = "none";
+            locationSuggestions.innerHTML = "";
+
+            previousWeather = null;
+
+            getWeather(currentCity);
+            startRealtime();
+        }
+
         function getWeather(city) {
             loading.style.display = "block";
             errorDiv.textContent = "";
