@@ -692,7 +692,7 @@
 
         <div class="panel">
             <form id="weatherForm" class="search-area">
-                <input type="text" id="cityInput" placeholder="Cari lokasi spesifik, contoh: Sukamaju, Bogor, Indonesia" required>
+                <input type="text" id="cityInput" placeholder="Cari lokasi spesifik, contoh: Sarabau, Plered, Cirebon, Indonesia" required>
                 <button type="submit">Mulai Live</button>
                 <button type="button" id="refreshBtn" class="refresh-btn">Refresh</button>
                 <button type="button" id="saveFavoriteBtn" class="save-btn">Simpan</button>
@@ -875,7 +875,8 @@
             </div>
 
             <div class="footer-note">
-                Data cuaca berasal dari WeatherAPI.com Forecast API. Gunakan lokasi spesifik agar hasil lebih akurat.
+                Data cuaca berasal dari WeatherAPI.com Forecast API. Pencarian lokasi detail dibantu OpenStreetMap/Nominatim.
+                Gunakan lokasi spesifik agar hasil lebih akurat.
             </div>
         </div>
     </div>
@@ -889,10 +890,10 @@
                 dan mode offline terbatas.
             </p>
             <p>
-                Data cuaca berasal dari WeatherAPI.com Forecast API dan diproses melalui backend Flask.
+                Data cuaca berasal dari WeatherAPI.com Forecast API, sedangkan pencarian lokasi detail dibantu oleh OpenStreetMap/Nominatim.
             </p>
             <p>
-                Teknologi: Flask, HTML, CSS, JavaScript, Chart.js, PythonAnywhere, GitHub, dan PWA.
+                Teknologi: Flask, HTML, CSS, JavaScript, Chart.js, PythonAnywhere, GitHub, WeatherAPI, OpenStreetMap, dan PWA.
             </p>
             <button type="button" id="closeAboutBtn" class="stop-btn">Tutup</button>
         </div>
@@ -975,7 +976,7 @@
 
             searchTimeout = setTimeout(function() {
                 searchLocations(query);
-            }, 500);
+            }, 1200);
         });
 
         refreshBtn.addEventListener("click", function() {
@@ -1143,14 +1144,89 @@
                     if (data.success && data.locations.length > 0) {
                         renderLocationSuggestions(data.locations);
                     } else {
-                        locationSuggestions.style.display = "block";
-                        locationSuggestions.innerHTML =
-                            '<div class="location-empty">Lokasi belum ditemukan. Coba tulis lebih spesifik, misalnya desa, kabupaten, Indonesia.</div>';
+                        searchLocationsOSM(query);
                     }
                 })
                 .catch(error => {
                     console.log(error);
-                    locationSuggestions.style.display = "none";
+                    searchLocationsOSM(query);
+                });
+        }
+
+        function searchLocationsOSM(query) {
+            let osmQuery = query;
+
+            if (!query.toLowerCase().includes("indonesia")) {
+                osmQuery = query + ", Indonesia";
+            }
+
+            const url =
+                "https://nominatim.openstreetmap.org/search" +
+                "?format=jsonv2" +
+                "&addressdetails=1" +
+                "&limit=8" +
+                "&countrycodes=id" +
+                "&accept-language=id" +
+                "&q=" + encodeURIComponent(osmQuery);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || data.length === 0) {
+                        locationSuggestions.style.display = "block";
+                        locationSuggestions.innerHTML =
+                            '<div class="location-empty">Lokasi belum ditemukan. Coba tulis lebih lengkap, contoh: Sarabau, Plered, Cirebon, Jawa Barat, Indonesia.</div>';
+                        return;
+                    }
+
+                    const locations = data.map(function(item) {
+                        const address = item.address || {};
+
+                        const name =
+                            address.village ||
+                            address.hamlet ||
+                            address.town ||
+                            address.suburb ||
+                            address.neighbourhood ||
+                            address.city ||
+                            item.name ||
+                            query;
+
+                        const regionParts = [
+                            address.city_district,
+                            address.municipality,
+                            address.county,
+                            address.city,
+                            address.state
+                        ];
+
+                        const region = regionParts
+                            .filter(function(part) {
+                                return part && part !== name;
+                            })
+                            .join(", ");
+
+                        const country = address.country || "Indonesia";
+
+                        return {
+                            name: name,
+                            region: region,
+                            country: country,
+                            lat: item.lat,
+                            lon: item.lon,
+                            label: item.display_name,
+                            query: item.lat + "," + item.lon,
+                            source: "OpenStreetMap"
+                        };
+                    });
+
+                    renderLocationSuggestions(locations);
+                })
+                .catch(error => {
+                    console.log(error);
+                    locationSuggestions.style.display = "block";
+                    locationSuggestions.innerHTML =
+                        '<div class="location-empty">Gagal mencari lokasi detail. Coba tulis format lengkap: desa, kecamatan, kabupaten, provinsi, Indonesia.</div>';
                 });
         }
 
@@ -1168,7 +1244,9 @@
 
                 const sub = document.createElement("div");
                 sub.className = "location-suggestion-sub";
-                sub.textContent = [location.region, location.country].filter(Boolean).join(", ");
+
+                const sourceText = location.source ? " • " + location.source : "";
+                sub.textContent = [location.region, location.country].filter(Boolean).join(", ") + sourceText;
 
                 item.appendChild(main);
                 item.appendChild(sub);
