@@ -620,7 +620,94 @@
         .about-content h2 {
             margin-top: 0;
         }
+        .location-suggestions {
+    display: none;
+    margin-top: -6px;
+    margin-bottom: 18px;
+    padding: 14px;
+    border-radius: 22px;
+    background: rgba(15, 23, 42, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    backdrop-filter: blur(16px);
+}
 
+.suggestion-title {
+    font-weight: bold;
+    color: white;
+    margin-bottom: 12px;
+    font-size: 15px;
+}
+
+.location-suggestion-item {
+    padding: 14px;
+    border-radius: 18px;
+    cursor: pointer;
+    color: white;
+    transition: 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    text-align: left;
+    background: rgba(255, 255, 255, 0.10);
+    margin-bottom: 10px;
+}
+
+.location-suggestion-item:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.28);
+    transform: translateY(-2px);
+}
+
+.location-suggestion-main {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 5px;
+}
+
+.location-suggestion-sub {
+    font-size: 12px;
+    color: var(--text-soft);
+    line-height: 1.5;
+}
+
+.location-suggestion-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.source-badge {
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: var(--text-soft);
+}
+
+.pick-location-btn {
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: rgba(34, 197, 94, 0.95);
+    color: white;
+    border: none;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.pick-location-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+.location-empty {
+    color: var(--text-soft);
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+}
         @media (max-width: 900px) {
             .weather-layout {
                 grid-template-columns: 1fr;
@@ -1185,19 +1272,23 @@
                         const name =
                             address.village ||
                             address.hamlet ||
-                            address.town ||
-                            address.suburb ||
                             address.neighbourhood ||
+                            address.suburb ||
+                            address.quarter ||
+                            address.town ||
                             address.city ||
+                            address.county ||
                             item.name ||
                             query;
 
                         const regionParts = [
-                            address.city_district,
-                            address.municipality,
-                            address.county,
-                            address.city,
-                            address.state
+                        address.road,
+                        address.suburb,
+                        address.city_district,
+                        address.municipality,
+                        address.county,
+                        address.city,
+                        address.state
                         ];
 
                         const region = regionParts
@@ -1229,48 +1320,84 @@
                         '<div class="location-empty">Gagal mencari lokasi detail. Coba tulis format lengkap: desa, kecamatan, kabupaten, provinsi, Indonesia.</div>';
                 });
         }
+function renderLocationSuggestions(locations) {
+    function selectSuggestedLocation(location) {
+    const label = location.label || [location.name, location.region, location.country]
+        .filter(Boolean)
+        .join(", ");
 
-        function renderLocationSuggestions(locations) {
-            locationSuggestions.style.display = "block";
-            locationSuggestions.innerHTML = "";
+    const query = location.query;
 
-            locations.forEach(function(location) {
-                const item = document.createElement("div");
-                item.className = "location-suggestion-item";
+    cityInput.value = label;
+    selectedLocationQuery = query;
+    currentCity = query;
 
-                const main = document.createElement("div");
-                main.className = "location-suggestion-main";
-                main.textContent = location.name || "-";
+    locationSuggestions.style.display = "none";
+    locationSuggestions.innerHTML = "";
 
-                const sub = document.createElement("div");
-                sub.className = "location-suggestion-sub";
+    previousWeather = null;
 
-                const sourceText = location.source ? " • " + location.source : "";
-                sub.textContent = [location.region, location.country].filter(Boolean).join(", ") + sourceText;
+    getWeather(currentCity);
+    startRealtime();
+}
+    
 
-                item.appendChild(main);
-                item.appendChild(sub);
+    locationSuggestions.style.display = "block";
+    locationSuggestions.innerHTML = "";
 
-                item.addEventListener("click", function() {
-                    const label = location.label;
-                    const query = location.query;
+    const title = document.createElement("div");
+    title.className = "suggestion-title";
+    title.textContent = "Pilih lokasi yang sesuai:";
+    locationSuggestions.appendChild(title);
 
-                    cityInput.value = label;
-                    selectedLocationQuery = query;
-                    currentCity = query;
+    locations.forEach(function(location) {
+        const item = document.createElement("div");
+        item.className = "location-suggestion-item";
 
-                    locationSuggestions.style.display = "none";
-                    locationSuggestions.innerHTML = "";
+        const main = document.createElement("div");
+        main.className = "location-suggestion-main";
+        main.textContent = location.name || "-";
 
-                    previousWeather = null;
-                    getWeather(currentCity);
-                    startRealtime();
-                });
+        const sub = document.createElement("div");
+        sub.className = "location-suggestion-sub";
 
-                locationSuggestions.appendChild(item);
-            });
-        }
+        const fullAddress = location.label || [location.name, location.region, location.country]
+            .filter(Boolean)
+            .join(", ");
 
+        sub.textContent = fullAddress;
+
+        const bottom = document.createElement("div");
+        bottom.className = "location-suggestion-bottom";
+
+        const source = document.createElement("div");
+        source.className = "source-badge";
+        source.textContent = location.source ? location.source : "WeatherAPI";
+
+        const pickBtn = document.createElement("button");
+        pickBtn.type = "button";
+        pickBtn.className = "pick-location-btn";
+        pickBtn.textContent = "Pilih & Mulai Live";
+
+        pickBtn.addEventListener("click", function(event) {
+            event.stopPropagation();
+            selectSuggestedLocation(location);
+        });
+
+        item.addEventListener("click", function() {
+            selectSuggestedLocation(location);
+        });
+
+        bottom.appendChild(source);
+        bottom.appendChild(pickBtn);
+
+        item.appendChild(main);
+        item.appendChild(sub);
+        item.appendChild(bottom);
+
+        locationSuggestions.appendChild(item);
+    });
+} 
         function getWeather(city) {
             loading.style.display = "block";
             errorDiv.textContent = "";
